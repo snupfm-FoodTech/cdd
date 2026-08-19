@@ -1,0 +1,76 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-diet}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-diet}
+      POSTGRES_DB: ${POSTGRES_DB:-diet}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    command:
+      - postgres
+      - -c
+      - listen_addresses=*
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  custom-diet-api:
+    build:
+      context: ./custom-diet-api
+    image: app-custom-diet-api:latest
+    container_name: custom-diet-api
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-diet}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-diet}
+      POSTGRES_DB: ${POSTGRES_DB:-diet}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost/api}
+      CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-https://localhost}
+    volumes:
+      - ./deploy/application.properties:/app/application.properties:ro
+      - ./deploy/log:/app/log
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+  custom-diet-front:
+    build:
+      context: ./custom-diet-front
+      args:
+        NEXT_PUBLIC_BASE_PATH: ""
+        NEXT_PUBLIC_CD_SERVICE: /service-page
+        NEXT_PUBLIC_FEATURE_ALLERGEN: "false"
+    image: app-custom-diet-front:latest
+    container_name: custom-diet-front
+    restart: always
+    env_file:
+      - ./deploy/front.env
+    ports:
+      - "3000:3000"
+
+  nginx:
+    image: nginx:latest
+    container_name: custom-diet-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - custom-diet-api
+      - custom-diet-front
+
+volumes:
+  postgres_data:

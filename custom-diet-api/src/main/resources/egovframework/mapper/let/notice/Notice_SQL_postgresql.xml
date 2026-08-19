@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="NoticeDAO">
+
+	 <resultMap id = "notice_mapper" type="egovframework.let.notice.entity.NoticeEntity">
+    	<result property="ntcId" column="ntc_id"/>
+       	<result property="ntcTit" column="ntc_tit" />
+       	<result property="ntcCtnt" column="ntc_ctnt" />
+       	<result property="ntcAtchUrl" column="ntc_atch_url" />
+		<result property="creUsrId" column="cre_usr_id"/>
+		<result property="creDt" column="cre_dt"/>
+		<result property="updUsrId" column="upd_usr_id"/>
+		<result property="updDt" column="upd_dt"/>
+		<result property="ttlNo" column="ttl_no"/>
+		<result property="no" column="no"/>
+    </resultMap>
+
+	<select id="findNoticeById" resultMap="notice_mapper">
+		SELECT *, 1 as no
+		FROM ntc_mgmt
+		WHERE ntc_id = #{id}
+	</select>
+	
+	<select id="findAllNotice" resultMap="notice_mapper">
+		SELECT 
+			a.*, 
+			count(*) over() AS ttl_no,
+			count(*) over() + 1 - ROW_NUMBER() over(
+	        	<choose>
+		        	<when test="orderByField != null and orderByField != ''">
+		        		ORDER BY a.${orderByField} <if test="isDesc">DESC</if>
+		        	</when>
+		        	<otherwise>
+		        		ORDER BY a.cre_dt DESC, a.ntc_id
+		        	</otherwise>
+		        </choose>
+	        ) as no
+		FROM ntc_mgmt a
+		WHERE 1 = 1
+		<if test="ntcTit != null and ntcTit != ''">
+		<bind name="ntcTit" value="'%' + ntcTit.toUpperCase() + '%'" />
+        AND UPPER(a.ntc_tit) LIKE #{ntcTit}
+        </if>
+        <if test="ntcCtnt != null and ntcCtnt != ''">
+		<bind name="ntcCtnt" value="'%' + ntcCtnt.toUpperCase() + '%'" />
+        AND UPPER(a.ntc_ctnt) LIKE #{ntcCtnt}
+        </if>
+		<choose>
+        	<when test="orderByField != null and orderByField != ''">
+        		ORDER BY a.${orderByField} <if test="isDesc">DESC</if>
+        	</when>
+        	<otherwise>
+        		ORDER BY a.cre_dt DESC, a.ntc_id
+        	</otherwise>
+        </choose>
+        <if test="offset != null">
+        OFFSET ${offset}
+        </if>
+        <if test="limit != null">
+        LIMIT ${limit}
+        </if>
+	</select>
+	
+	<insert id="addNotice" useGeneratedKeys="true" keyProperty="ntcId">
+	 INSERT INTO ntc_mgmt (
+	    ntc_tit, ntc_ctnt, ntc_atch_url, cre_usr_id, cre_dt, upd_usr_id, upd_dt
+	  )
+	  VALUES (
+	    #{ntcTit},
+	    #{ntcCtnt},
+	    (#{ntcAtchUrl} || (SELECT currval('ntc_mgmt_ntc_id_seq'))),
+	    #{creUsrId},
+	    #{creDt},
+	    #{updUsrId},
+	    #{updDt}
+	  )
+	</insert>
+	
+	<update id="updateNotice">
+	  UPDATE ntc_mgmt
+	  <set>
+	    <if test="ntcTit != null and ntcTit != ''">
+	      ntc_tit = #{ntcTit},
+	    </if>
+	    <if test="ntcCtnt != null and ntcCtnt != ''">
+	      ntc_ctnt = #{ntcCtnt},
+	    </if>
+	    <if test="ntcAtchUrl != null and ntcAtchUrl != ''">
+	      ntc_atch_url = #{ntcAtchUrl},
+	    </if>
+	    <if test="updUsrId != null">
+	      upd_usr_id = #{updUsrId},
+	    </if>
+	    <if test="updDt != null">
+	      upd_dt = #{updDt}
+	    </if>
+	  </set>
+	  WHERE ntc_id = #{ntcId}
+	</update>
+	
+	<delete id="deleteNoticeById">
+		DELETE FROM ntc_mgmt
+		WHERE ntc_id = #{id}
+	</delete>
+</mapper>

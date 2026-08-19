@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customized Diet Design - CDD</title>
+    <link rel="icon" type="image/x-icon" href="/public/icon.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1.5" fill="rgba(255,255,255,0.05)"/><circle cx="40" cy="70" r="1" fill="rgba(255,255,255,0.08)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #fff, #a8d8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(255,255,255,0.3);
+        }
+
+        .tagline {
+            font-size: 1.3rem;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(45deg, #ff6b6b, #ffa500);
+            color: white;
+            padding: 15px 35px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(255, 107, 107, 0.4);
+        }
+
+        /* Services Section */
+        .services {
+            padding: 100px 0;
+            background: white;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 60px;
+            color: #333;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 50px;
+            margin-top: 60px;
+        }
+
+        .service-card {
+            text-align: center;
+            padding: 50px 30px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            border: 2px solid #f0f0f0;
+        }
+
+        .service-card:nth-child(1) {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+            border: none;
+        }
+
+        .service-card:nth-child(2) {
+            background: linear-gradient(135deg, #55a3ff, #003d82);
+            color: white;
+            border: none;
+        }
+
+        .service-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .service-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .service-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .service-features {
+            list-style: none;
+            margin-bottom: 30px;
+        }
+
+        .service-features li {
+            padding: 8px 0;
+            opacity: 0.9;
+        }
+
+        .service-features li:before {
+            content: "✓ ";
+            color: #00ff88;
+            font-weight: bold;
+        }
+
+        /* Program Features Section */
+        .program-features {
+            padding: 100px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-top: 60px;
+        }
+
+        .feature-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: scale(1.03);
+            background: rgba(255,255,255,0.15);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .feature-desc {
+            opacity: 0.9;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        /* Enterprise Solutions Section */
+        .enterprise {
+            padding: 100px 0;
+            background: #f8f9fa;
+        }
+
+        .enterprise-content {
+            margin-top: 60px;
+        }
+
+        .solution-categories {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+
+        .category-card {
+            background: white;
+            padding: 30px 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .category-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .category-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2a5298;
+        }
+
+        .category-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .category-tag {
+            background: linear-gradient(45deg, #74b9ff, #0984e3);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .process-section {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .process-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            color: #333;
+            text-align: center;
+        }
+
+        .process-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+        }
+
+        .process-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .process-step-flow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .step-circle {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #fd79a8, #e84393);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            box-shadow: 0 8px 20px rgba(232, 67, 147, 0.3);
+        }
+
+        .step-text-flow {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #333;
+            line-height: 1.3;
+        }
+
+        .process-arrow {
+            font-size: 2rem;
+            color: #fd79a8;
+            font-weight: bold;
+            margin: 0 10px;
+        }
+
+        .process-step {
+            text-align: center;
+            padding: 20px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #fd79a8, #e84393);
+            color: white;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            line-height: 40px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .step-text {
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        /* Partners Section */
+        .partners {
+            padding: 80px 0;
+            background: white;
+        }
+
+        .partners-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            align-items: center;
+            margin-top: 50px;
+        }
+
+        .partner-logo {
+            background: #f8f9fa;
+            padding: 30px 20px;
+            border-radius: 15px;
+            text-align: center;
+            font-weight: 600;
+            color: #666;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .partner-logo:hover {
+            transform: scale(1.05);
+        }
+
+        /* Footer */
+        footer {
+            background: #1a1a1a;
+            color: white;
+            padding: 60px 0 30px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 20px;
+            color: #ff6b6b;
+        }
+
+        .footer-section a {
+            color: #ccc;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 10px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: #ff6b6b;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid #333;
+            padding-top: 30px;
+            text-align: center;
+            color: #999;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 2.5rem;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+            
+            .features-grid,
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .solution-categories {
+                grid-template-columns: 1fr;
+            }
+
+            .process-steps {
+                grid-template-columns: 1fr;
+            }
+
+            .process-flow {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .process-arrow {
+                transform: rotate(90deg);
+                margin: 0;
+            }
+
+            .research section > div > div {
+                grid-template-columns: 1fr !important;
+            }
+
+            .platform-overview > .container > div {
+                width: 500px !important;
+                height: 500px !important;
+                transform: scale(0.6);
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.8s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content fade-in">
+                <h1 class="logo">CDD (Customized Diet Design)</h1>
+                <p class="tagline">생애주기·질환·선호도 기반 맞춤형 식이설계 플랫폼</p>
+                <p style="margin-bottom: 20px; font-size: 1.1rem; opacity: 0.8;">
+                    생애주기·질환·선호도 기반 맞춤형 식이 설계 알고리즘 개발 및 응용 플랫폼
+                </p>
+                <div style="margin-top: 30px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 15px; backdrop-filter: blur(10px);">
+                    <p style="font-size: 0.95rem; opacity: 0.9; margin-bottom: 8px;">
+                        <strong>지원기관:</strong> 농림축산식품부
+                    </p>
+                    <p style="font-size: 0.95rem; opacity: 0.9; margin-bottom: 8px;">
+                        <strong>과제명:</strong> 맞춤형 식이설계 플랫폼 개발 (2021.04.01~2025.12.31)
+                    </p>
+                    <p style="font-size: 0.95rem; opacity: 0.9;">
+                        <strong>운영기관:</strong> 서울대학교 · 월드푸드테크협의회 · 한국식품산업클러스터진흥원
+                    </p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Platform Overview Diagram Section -->
+    <section class="platform-overview" style="padding: 100px 0; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 50%, #90caf9 100%); position: relative; overflow: hidden;">
+        <div class="container">
+            <h2 class="section-title fade-in" style="color: #1976d2; margin-bottom: 30px;">플랫폼 개요</h2>
+            
+            <!-- 플랫폼 목적 설명 -->
+            <div style="text-align: center; margin-bottom: 60px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 15px; backdrop-filter: blur(10px);">
+                <p style="font-size: 1.2rem; color: #1976d2; font-weight: 600; line-height: 1.5;">
+                    개인맞춤형식품 기업들이 활용 가능한 맞춤 식이 설계용<br>
+                    데이터, 알고리즘, 프로그램 등을 제공하여 제조/서비스 개발 지원
+                </p>
+            </div>
+            
+            <!-- 배경 장식 원들 -->
+            <div style="position: absolute; width: 80px; height: 80px; background: #4fc3f7; border-radius: 50%; opacity: 0.3; top: 10%; right: 15%; animation: float 6s ease-in-out infinite;"></div>
+            <div style="position: absolute; width: 60px; height: 60px; background: #29b6f6; border-radius: 50%; opacity: 0.3; bottom: 20%; left: 10%; animation: float 8s ease-in-out infinite reverse;"></div>
+            <div style="position: absolute; width: 40px; height: 40px; background: #42a5f5; border-radius: 50%; opacity: 0.3; top: 30%; left: 20%; animation: float 7s ease-in-out infinite;"></div>
+            <div style="position: absolute; width: 50px; height: 50px; background: #5c6bc0; border-radius: 50%; opacity: 0.3; bottom: 30%; right: 20%; animation: float 9s ease-in-out infinite reverse;"></div>
+            <div style="position: absolute; width: 30px; height: 30px; background: #26c6da; border-radius: 50%; opacity: 0.3; top: 60%; right: 35%; animation: float 5s ease-in-out infinite;"></div>
+
+            <div style="position: relative; width: 700px; height: 600px; margin: 0 auto;">
+                
+                <!-- 삼각형 점선 배경 -->
+                <svg style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 500px; height: 400px; z-index: 1; opacity: 0.3;" viewBox="0 0 500 400">
+                    <defs>
+                        <pattern id="dashedPattern" patternUnits="userSpaceOnUse" width="10" height="10">
+                            <line x1="0" y1="0" x2="10" y2="10" stroke="#1976d2" stroke-width="2" stroke-dasharray="5,5"/>
+                        </pattern>
+                    </defs>
+                    <!-- 삼각형들 -->
+                    <polygon points="250,80 400,280 100,280" fill="none" stroke="#1976d2" stroke-width="2" stroke-dasharray="8,4"/>
+                    <polygon points="250,120 360,240 140,240" fill="none" stroke="#42a5f5" stroke-width="1.5" stroke-dasharray="6,3"/>
+                    <polygon points="250,100 380,260 120,260" fill="none" stroke="#64b5f6" stroke-width="1" stroke-dasharray="4,2"/>
+                </svg>
+
+                <!-- 중앙 원 (크기 축소) -->
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 180px; height: 180px; background: white; border: 4px solid #1976d2; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; box-shadow: 0 8px 25px rgba(25, 118, 210, 0.3); z-index: 20;">
+                    <div style="font-size: 14px; font-weight: 600; color: #1976d2; line-height: 1.3;">
+                        CDD<br>
+                        맞춤형 식이설계<br>
+                        플랫폼
+                    </div>
+                </div>
+
+                <!-- 주변 원들 (더 멀리 분산) -->
+                <div class="platform-circle top" style="position: absolute; top: 40px; left: 50%; width: 140px; height: 140px; border-radius: 50%; background: linear-gradient(135deg, #3949ab, #303f9f); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: white; font-weight: 600; font-size: 14px; box-shadow: 0 6px 20px rgba(0,0,0,0.2); transition: transform 0.3s ease; z-index: 10;">
+                    <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+                    <div style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">90,000+</div>
+                    <div>식이 빅데이터</div>
+                </div>
+
+                <div class="platform-circle right" style="position: absolute; top: 50%; right: 20px; width: 140px; height: 140px; border-radius: 50%; background: linear-gradient(135deg, #1976d2, #1565c0); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: white; font-weight: 600; font-size: 14px; box-shadow: 0 6px 20px rgba(0,0,0,0.2); transition: transform 0.3s ease; z-index: 10;">
+                    <div style="font-size: 24px; margin-bottom: 8px;">⚙️</div>
+                    <div style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">12</div>
+                    <div>기업 맞춤형<br>알고리즘</div>
+                </div>
+
+                <div class="platform-circle bottom" style="position: absolute; bottom: 40px; left: 50%; width: 140px; height: 140px; border-radius: 50%; background: linear-gradient(135deg, #5e35b1, #512da8); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: white; font-weight: 600; font-size: 14px; box-shadow: 0 6px 20px rgba(0,0,0,0.2); transition: transform 0.3s ease; z-index: 10;">
+                    <div style="font-size: 24px; margin-bottom: 8px;">📚</div>
+                    <div style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">2,521</div>
+                    <div>지식 아카이브</div>
+                </div>
+
+                <div class="platform-circle left" style="position: absolute; top: 50%; left: 20px; width: 140px; height: 140px; border-radius: 50%; background: linear-gradient(135deg, #616161, #424242); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: white; font-weight: 600; font-size: 14px; box-shadow: 0 6px 20px rgba(0,0,0,0.2); transition: transform 0.3s ease; z-index: 10;">
+                    <div style="font-size: 24px; margin-bottom: 8px;">🏢</div>
+                    <div style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">220</div>
+                    <div>기업 아카이브</div>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            @keyframes float {
+                0%, 100% { transform: translateY(0px); }
+                50% { transform: translateY(-20px); }
+            }
+
+            .platform-circle.top {
+                transform: translateX(-50%);
+            }
+
+            .platform-circle.top:hover {
+                transform: translateX(-50%) scale(1.05) !important;
+            }
+
+            .platform-circle.right {
+                transform: translateY(-50%);
+            }
+
+            .platform-circle.right:hover {
+                transform: translateY(-50%) scale(1.05) !important;
+            }
+
+            .platform-circle.bottom {
+                transform: translateX(-50%);
+            }
+
+            .platform-circle.bottom:hover {
+                transform: translateX(-50%) scale(1.05) !important;
+            }
+
+            .platform-circle.left {
+                transform: translateY(-50%);
+            }
+
+            .platform-circle.left:hover {
+                transform: translateY(-50%) scale(1.05) !important;
+            }
+        </style>
+    </section>
+
+    <!-- Services Section -->
+    <section class="services" id="services">
+        <div class="container">
+            <h2 class="section-title fade-in">서비스 플랜</h2>
+            <div class="services-grid">
+                <div class="service-card fade-in">
+                    <h3 class="service-title">무료 솔루션</h3>
+                    <div class="service-price">무료</div>
+                    <ul class="service-features">
+                        <li>식사설계 프로그램</li>
+                        <li>지식 아카이브</li>
+                        <li>기업 아카이브</li>
+                    </ul>
+                    <a id="cta-cd-app" href="#" class="cta-button" style="background: linear-gradient(45deg, #74b9ff, #0984e3);">시작하기</a>
+                </div>
+                <div class="service-card fade-in">
+                    <h3 class="service-title">기업 솔루션</h3>
+                    <div class="service-price">맞춤 견적</div>
+                    <ul class="service-features">
+                        <li>전문가 컨설팅</li>
+                        <li>기업 맞춤형 알고리즘 설계</li>
+                        <li>실증 프로젝트 지원</li>
+                    </ul>
+                    <a id="cta-cd-business" href="#" class="cta-button" style="background: linear-gradient(45deg, #55a3ff, #003d82);">상담 신청</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Program Features Section -->
+    <section class="program-features">
+        <div class="container">
+            <h2 class="section-title fade-in" style="color: white;">식사설계 프로그램 핵심 기능</h2>
+            <div class="features-grid">
+                <div class="feature-card fade-in">
+                    <span class="feature-icon">🍱</span>
+                    <h3 class="feature-title">질환·건강 목적 및 구성 요소 기반 도시락 식단 설계</h3>
+                    <p class="feature-desc">
+                        질환(당뇨, 신장, 암, 고혈압 등) 및 건강관리 목적(비만, 저당, 저염, 고단백 등)을 반영하고, 찬 수, 밥/국 포함 여부 등 식단 구성 요소를 고려한 도시락 식단 설계 및 제품화 지원
+                    </p>
+                </div>
+                <div class="feature-card fade-in">
+                    <span class="feature-icon">📋</span>
+                    <h3 class="feature-title">식단 샘플 기반 간편 맞춤형 식단 구성</h3>
+                    <p class="feature-desc">
+                        기존 식단 샘플을 불러온 뒤 음식 또는 식재료를 선택적으로 수정하여 간편하게 개인 맞춤형 식단 구성 가능
+                    </p>
+                </div>
+                <div class="feature-card fade-in">
+                    <span class="feature-icon">📊</span>
+                    <h3 class="feature-title">식단 영양기준 제공 및 분석</h3>
+                    <p class="feature-desc">
+                        개인별 영양 섭취 기준을 제공하고 식단의 영양성분을 상세하게 분석하여 시각화
+                    </p>
+                </div>
+                <div class="feature-card fade-in">
+                    <span class="feature-icon">🔄</span>
+                    <h3 class="feature-title">유사성 기반 대체 음식 추천</h3>
+                    <p class="feature-desc">
+                        음식군 및 주재료 유사성, 영양성분 유사성 등을 고려하여 최적의 대체 음식 추천
+                    </p>
+                </div>
+                <div class="feature-card fade-in">
+                    <span class="feature-icon">🛡️</span>
+                    <h3 class="feature-title">알레르기 필터링</h3>
+                    <p class="feature-desc">
+                        21종 알레르기 유발 식품을 기반으로 식재료 필터링 기능을 제공하여 안전한 식단 설계 지원
+                    </p>
+                </div>
+                <div class="feature-card fade-in">
+                    <span class="feature-icon">🌱</span>
+                    <h3 class="feature-title">제철·지리적표시·친환경인증 정보 제공</h3>
+                    <p class="feature-desc">
+                        제철·지리적표시·친환경인증 등 고부가가치 요소를 반영한 식단 구성 지원
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enterprise Solutions Section -->
+    <section class="enterprise">
+        <div class="container">
+            <h2 class="section-title fade-in">기업 솔루션 핵심 기능</h2>
+            <div class="enterprise-content">
+                <div class="solution-categories fade-in">
+                    <div class="category-card">
+                        <h3 class="category-title">식이 평가/진단</h3>
+                        <div class="category-items">
+                            <span class="category-tag">사용자 데이터 니즈 분석</span>
+                            <span class="category-tag">보유 식재료 기반 식습관 평가 알고리즘</span>
+                            <span class="category-tag">개인 맞춤화된 영양 기준 도출</span>
+                        </div>
+                    </div>
+                    <div class="category-card">
+                        <h3 class="category-title">식이 추천</h3>
+                        <div class="category-items">
+                            <span class="category-tag">선호도 예측 레시피 추천</span>
+                            <span class="category-tag">채식 유형별 필터링</span>
+                            <span class="category-tag">비만 유형별 영양 평가</span>
+                            <span class="category-tag">신장질환 대체 레시피</span>
+                        </div>
+                    </div>
+                    <div class="category-card">
+                        <h3 class="category-title">식단 설계</h3>
+                        <div class="category-items">
+                            <span class="category-tag">맞춤형 도시락 설계</span>
+                            <span class="category-tag">구독형 식단 실험 설계</span>
+                            <span class="category-tag">가격/영양/다양성 최적화</span>
+                            <span class="category-tag">고령자 저작단계 고려</span>
+                        </div>
+                    </div>
+                    <div class="category-card">
+                        <h3 class="category-title">식이 교육</h3>
+                        <div class="category-items">
+                            <span class="category-tag">맛 선호도 민감도 평가</span>
+                            <span class="category-tag">AI 식이 관리 챗봇</span>
+                            <span class="category-tag">개인화 교육 프로그램</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="process-section fade-in">
+                    <h3 class="process-title">맞춤형 솔루션 개발 프로세스</h3>
+                    <div class="process-flow">
+                        <div class="process-step-flow">
+                            <div class="step-circle">1</div>
+                            <div class="step-text-flow">전문가 컨설팅</div>
+                        </div>
+                        <div class="process-arrow">→</div>
+                        <div class="process-step-flow">
+                            <div class="step-circle">2</div>
+                            <div class="step-text-flow">기업 맞춤 식이<br>알고리즘 설계</div>
+                        </div>
+                        <div class="process-arrow">→</div>
+                        <div class="process-step-flow">
+                            <div class="step-circle">3</div>
+                            <div class="step-text-flow">API 기반 데이터베이스<br>및 알고리즘 지원</div>
+                        </div>
+                        <div class="process-arrow">→</div>
+                        <div class="process-step-flow">
+                            <div class="step-circle">4</div>
+                            <div class="step-text-flow">실증 협력<br>프로젝트 진행</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 40px; text-align: center;">
+                        <h4 style="color: #666; margin-bottom: 20px; font-size: 1.1rem;">적용 대상 예시</h4>
+                        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px;">
+                            <span class="category-tag" style="background: linear-gradient(45deg, #a8e6cf, #4ecdc4);">일반인</span>
+                            <span class="category-tag" style="background: linear-gradient(45deg, #ffd3a5, #fd9853);">체중 관리자</span>
+                            <span class="category-tag" style="background: linear-gradient(45deg, #a8e6cf, #7fcdcd);">비건</span>
+                            <span class="category-tag" style="background: linear-gradient(45deg, #ffa8a8, #ff6b6b);">신장 질환자</span>
+                            <span class="category-tag" style="background: linear-gradient(45deg, #c4a8ff, #9b59b6);">고령자</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Research Section -->
+    <section class="research" style="padding: 100px 0; background: #f8f9fa;">
+        <div class="container">
+            <h2 class="section-title fade-in">연구 성과</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 50px; margin-top: 60px;">
+                
+                <!-- Patents Section -->
+                <div class="research-category fade-in" style="background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                    <h3 style="color: #2a5298; font-size: 1.5rem; margin-bottom: 30px; text-align: center;">🏆 특허</h3>
+                    <div style="space-y: 20px;">
+                        <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #2a5298;">
+                            <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 5px;">채식 동기 및 채식 유형에 따라 사용자 맞춤형 채식 서비스를 제공하는 방법 및 장치</h4>
+                            <p style="font-size: 0.9rem; color: #666;">등록: 1024175700000</p>
+                        </div>
+                        <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #e84393;">
+                            <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 5px;">식이 패턴을 평가하여 제공하는 시스템 장치 및 시스템 장치의 동작 방법</h4>
+                            <p style="font-size: 0.9rem; color: #666;">출원: 1020250071214</p>
+                        </div>
+                        <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #74b9ff;">
+                            <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 5px;">사용자 맞춤 식단을 제공하는 시스템 장치 및 시스템 장치의 동작 방법</h4>
+                            <p style="font-size: 0.9rem; color: #666;">출원: 1020250002821</p>
+                        </div>
+                        <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #55a3ff;">
+                            <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 5px;">사용자 맞춤 식이 추천 및 평가 시스템</h4>
+                            <p style="font-size: 0.9rem; color: #666;">출원: 1020230116607</p>
+                        </div>
+                        <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #fd79a8;">
+                            <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 5px;">추천 식단을 제공하는 시스템 장치 및 시스템 장치의 동작 방법</h4>
+                            <p style="font-size: 0.9rem; color: #666;">출원: 1020250002821</p>
+                        </div>
+                        <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #a8e6cf;">
+                            <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 5px;">맞춤형 식단을 설계하여 제공하는 시스템 장치 및 시스템 장치의 동작 방법</h4>
+                            <p style="font-size: 0.9rem; color: #666;">출원 준비 중</p>
+                        </div>
+                        <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #6c5ce7;">
+                            <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 5px;">그래프 뉴럴 네트워크 기반 환자 맞춤형 레시피 재료 대체 방법 및 시스템</h4>
+                            <p style="font-size: 0.9rem; color: #666;">출원 준비 중</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Papers Section -->
+                <div class="research-category fade-in" style="background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                    <h3 style="color: #2a5298; font-size: 1.5rem; margin-bottom: 30px; text-align: center;">📄 논문</h3>
+                    <div style="space-y: 20px;">
+                        <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #00b894;">
+                            <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 10px; line-height: 1.4;">Harnessing Social Media Data to Understand Information Needs About Kidney Diseases and Emotional Experiences With Disease Management: Topic and Sentiment Analysis</h4>
+                            <p style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">HJ Hwang, N Kim, JY You, HR Ryu, SY Kim, JH Yoon Park, KW Lee</p>
+                            <p style="font-size: 0.8rem; color: #888;">Journal of Medical Internet Research 2025</p>
+                        </div>
+                        <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #fdcb6e;">
+                            <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 10px; line-height: 1.4;">Personalized Food Score (PFS): A flexible nutrient profiling framework based on national nutrient guidelines and estimated energy requirements</h4>
+                            <p style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">HJ Hwang, SH Shin, SY Kim, JHY Park, EJ Min, H Yang, KW Lee</p>
+                            <p style="font-size: 0.8rem; color: #888;">Journal of Food Composition and Analysis 2025</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Partners Section -->
+    <section class="partners">
+        <div class="container">
+            <h2 class="section-title fade-in">실증 기업/기관</h2>
+            <div class="partners-grid">
+                <div class="partner-logo">사랑과선행</div>
+                <div class="partner-logo">쥬비스 다이어트</div>
+                <div class="partner-logo">스누비건</div>
+                <div class="partner-logo">평창군</div>
+                <div class="partner-logo">Pread</div>
+                <div class="partner-logo">잇마플</div>
+                <div class="partner-logo">베네핏츠</div>
+                <div class="partner-logo">프레시지</div>
+                <div class="partner-logo">서울대학교 보라매병원</div>
+                <div class="partner-logo">서울대학교 강남검진센터</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2025 CDD. All rights reserved.</p>
+                <p style="margin-top: 10px; font-size: 0.9rem;">
+                    지원기관: 농림축산식품부 | 운영기관: 한국식품산업클러스터진흥원 · 서울대학교
+                </p>
+                <p style="margin-top: 5px; font-size: 0.9rem;">
+                    맞춤형 식이설계 플랫폼 개발 과제 (2021.04.01~2025.12.31) 성과물
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/env.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('cta-cd-app');
+            const cdAppUrl = window.__ENV__?.CD_APP;
+            if (btn && cdAppUrl) {
+                btn.href = cdAppUrl;
+                btn.target = '_top';
+            }
+
+            const btnBusiness = document.getElementById('cta-cd-business');
+            if (btnBusiness && cdAppUrl) {
+                btnBusiness.href = cdAppUrl + '/business-solution';
+                btnBusiness.target = '_top';
+            }
+        });
+
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const target = this.getAttribute('href');
+                
+                // Ignore if:
+                // - No href attribute
+                // - href is exactly "#" (placeholder)
+                // - No element matches the selector (i.e., no such ID on the page)
+                if (!target || target === '#' || !document.querySelector(target)) return;
+
+                e.preventDefault();
+                    document.querySelector(target).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'all 0.8s ease-out';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>

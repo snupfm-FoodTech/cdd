@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>비만 유형별 식품 영양 평가 및 추천 - CDD</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            color: white;
+            padding: 40px 0;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: background 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .header-info {
+            flex: 1;
+        }
+
+        .algorithm-category {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .algorithm-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .algorithm-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .algorithm-icon {
+            font-size: 4rem;
+            opacity: 0.8;
+        }
+
+        /* Navigation */
+        nav {
+            background: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: #9b59b6;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 60px 0;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 40px;
+        }
+
+        .main-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .sidebar-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: #8e44ad;
+        }
+
+        .section-content {
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .feature-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border-left: 4px solid #9b59b6;
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #9b59b6;
+        }
+
+        .feature-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #8e44ad;
+        }
+
+        .feature-description {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+        }
+
+        .calculation-method {
+            background: #f3e5f5;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #7b1fa2;
+            border-left: 3px solid #9c27b0;
+        }
+
+        /* Scoring System */
+        .scoring-system {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+
+        .scoring-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: #8e44ad;
+            text-align: center;
+        }
+
+        .score-types {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .score-box {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .score-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #9b59b6;
+        }
+
+        .score-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .score-description {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* Weight Trend */
+        .weight-trend {
+            background: #fff3e0;
+            border: 1px solid #ffb74d;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .trend-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #f57c00;
+            margin-bottom: 15px;
+        }
+
+        .trend-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .trend-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+
+        .trend-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .trend-formula {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* Food Categories */
+        .food-categories {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .category-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            border-left: 4px solid #9b59b6;
+            text-align: center;
+        }
+
+        .category-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #9b59b6;
+        }
+
+        .category-name {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .category-desc {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* Application Grid */
+        .application-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .application-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border-left: 4px solid #9b59b6;
+        }
+
+        .application-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #8e44ad;
+        }
+
+        .application-description {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        /* Info Items */
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .info-value {
+            color: #666;
+        }
+
+        /* Status Card */
+        .status-card {
+            border-left: 4px solid #9b59b6;
+        }
+
+        /* Tech Details */
+        .tech-details {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+
+        .tech-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #8e44ad;
+        }
+
+        .tech-list {
+            list-style: none;
+        }
+
+        .tech-list li {
+            padding: 8px 0;
+            color: #555;
+        }
+
+        .tech-list li strong {
+            color: #9b59b6;
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 30px 0;
+        }
+
+        .warning-box h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .warning-box ul {
+            color: #856404;
+            margin-left: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .score-types {
+                grid-template-columns: 1fr;
+            }
+            
+            .food-categories {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-links {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .algorithm-title {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <button class="back-btn" onclick="window.location.href='algorithms.html'">←</button>
+                <div class="header-info">
+                    <div class="algorithm-category">식이 추천 알고리즘</div>
+                    <h1 class="algorithm-title">비만 유형별 식품 영양 평가 및 추천</h1>
+                    <p class="algorithm-subtitle">비만 유형별 맞춤 영양 프로파일링을 통한 개인화된 식품 영양 점수 제공</p>
+                </div>
+                <div class="algorithm-icon">⚕️</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <ul class="nav-links">
+                <li><a href="#overview" class="active">개요</a></li>
+                <li><a href="#scoring">점수 체계</a></li>
+                <li><a href="#features">핵심 기능</a></li>
+                <li><a href="#applications">활용 분야</a></li>
+                <li><a href="#technical">기술 상세</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="content-grid">
+                <!-- Main Section -->
+                <div class="main-section">
+                    <!-- 개요 -->
+                    <section id="overview">
+                        <h2 class="section-title">알고리즘 개요</h2>
+                        <div class="section-content">
+                            <p>
+                                <strong>비만 유형별 식품 영양 평가 및 추천 알고리즘</strong>은 개인의 체중 변화 패턴과 비만 유형을 분석하여 
+                                <strong>맞춤형 식품 추천</strong>을 제공하는 지능형 시스템입니다.
+                            </p>
+                            <p>
+                                이 알고리즘은 <strong>3가지 점수 체계</strong>(Basic Score, ED Score, SI Score)를 통해 
+                                개인의 현재 상태와 목표에 가장 적합한 식품을 선별하여 추천합니다.
+                            </p>
+                        </div>
+
+                        <!-- Food Categories -->
+                        <div class="food-categories">
+                            <div class="category-card">
+                                <div class="category-icon">🍿</div>
+                                <div class="category-name">간식</div>
+                                <div class="category-desc">건강한 간식 추천<br>(일일 칼로리의 10%)</div>
+                            </div>
+                            <div class="category-card">
+                                <div class="category-icon">🍱</div>
+                                <div class="category-name">본식</div>
+                                <div class="category-desc">주요 식사 메뉴<br>(일일 칼로리의 30%)</div>
+                            </div>
+                            <div class="category-card">
+                                <div class="category-icon">🥗</div>
+                                <div class="category-name">반찬</div>
+                                <div class="category-desc">영양 보조 메뉴<br>(일일 칼로리의 20%)</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 점수 체계 -->
+                    <section id="scoring">
+                        <h2 class="section-title">3가지 점수 체계</h2>
+                        
+                        <!-- Scoring System -->
+                        <div class="scoring-system">
+                            <h3 class="scoring-title">통합 점수 계산 시스템</h3>
+                            <div class="score-types">
+                                <div class="score-box">
+                                    <div class="score-icon">🎯</div>
+                                    <div class="score-name">Basic Score</div>
+                                    <div class="score-description">기본 영양 균형도 평가</div>
+                                </div>
+                                <div class="score-box">
+                                    <div class="score-icon">⚡</div>
+                                    <div class="score-name">ED Score</div>
+                                    <div class="score-description">에너지 밀도 최적화</div>
+                                </div>
+                                <div class="score-box">
+                                    <div class="score-icon">📊</div>
+                                    <div class="score-name">SI Score</div>
+                                    <div class="score-description">포만감 지수 평가</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Weight Trend Analysis -->
+                        <div class="weight-trend">
+                            <h3 class="trend-title">💡 체중 변화 추세별 점수 적용</h3>
+                            <div class="trend-grid">
+                                <div class="trend-item">
+                                    <div class="trend-name">감량기</div>
+                                    <div class="trend-formula">Basic + ED</div>
+                                </div>
+                                <div class="trend-item">
+                                    <div class="trend-name">정체기</div>
+                                    <div class="trend-formula">Basic + ED + SI</div>
+                                </div>
+                                <div class="trend-item">
+                                    <div class="trend-name">유지기</div>
+                                    <div class="trend-formula">Basic</div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 핵심 기능 -->
+                    <section id="features">
+                        <h2 class="section-title">핵심 기능</h2>
+                        
+                        <div class="features-grid">
+                            <div class="feature-card">
+                                <div class="feature-icon">🎯</div>
+                                <div class="feature-title">Basic Score 계산</div>
+                                <div class="feature-description">
+                                    개인의 영양 요구량 대비 식품의 영양소 균형도를 평가하여 기본 점수를 산출합니다.
+                                </div>
+                                <div class="calculation-method">
+                                    <strong>계산 방식:</strong> 개인별 영양소 기준 대비 식품 영양소 함량의 적합성 평가
+                                </div>
+                            </div>
+
+                            <div class="feature-card">
+                                <div class="feature-icon">⚡</div>
+                                <div class="feature-title">Energy Density Score</div>
+                                <div class="feature-description">
+                                    단위 중량당 칼로리 밀도를 분석하여 체중 관리에 효율적인 식품을 선별합니다.
+                                </div>
+                                <div class="calculation-method">
+                                    <strong>계산 방식:</strong> kcal/g 비율 기반 에너지 밀도 최적화 점수
+                                </div>
+                            </div>
+
+                            <div class="feature-card">
+                                <div class="feature-icon">📊</div>
+                                <div class="feature-title">Satiety Index Score</div>
+                                <div class="feature-description">
+                                    포만감 지수를 계산하여 적은 양으로도 높은 포만감을 주는 식품을 추천합니다.
+                                </div>
+                                <div class="calculation-method">
+                                    <strong>계산 방식:</strong> 41.6×지방 + 23.3×단백질 + 18.9×탄수화물 + 6.42×식이섬유 공식 적용
+                                </div>
+                            </div>
+
+                            <div class="feature-card">
+                                <div class="feature-icon">🔄</div>
+                                <div class="feature-title">체중 추세 기반 적응</div>
+                                <div class="feature-description">
+                                    개인의 체중 변화 패턴을 분석하여 현재 상황에 최적화된 점수 가중치를 적용합니다.
+                                </div>
+                                <div class="calculation-method">
+                                    <strong>특징:</strong> 감량기, 정체기, 유지기별 차별화된 추천 전략
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 활용 분야 -->
+                    <section id="applications">
+                        <h2 class="section-title">활용 분야</h2>
+                        <div class="section-content">
+                            <p>개인의 비만 유형과 체중 관리 목표에 따른 맞춤형 식품 추천이 필요한 다양한 분야에서 활용됩니다:</p>
+                        </div>
+
+                        <div class="application-grid">
+                            <div class="application-card">
+                                <div class="application-title">개인 맞춤 다이어트 앱</div>
+                                <div class="application-description">
+                                    사용자의 체중 변화 패턴을 분석하여 현재 상황에 가장 적합한 식품을 추천하는 서비스
+                                </div>
+                            </div>
+                            <div class="application-card">
+                                <div class="application-title">영양 상담 지원 도구</div>
+                                <div class="application-description">
+                                    영양사가 환자 상담 시 객관적인 식품 평가 기준과 추천 근거를 제공하는 시스템
+                                </div>
+                            </div>
+                            <div class="application-card">
+                                <div class="application-title">스마트 식단 관리 플랫폼</div>
+                                <div class="application-description">
+                                    개인의 목표와 현재 상태를 고려한 지능형 식단 구성 및 관리 서비스
+                                </div>
+                            </div>
+                            <div class="application-card">
+                                <div class="application-title">헬스케어 웨어러블 연동</div>
+                                <div class="application-description">
+                                    웨어러블 기기의 체중 데이터와 연동하여 실시간 맞춤형 식품 추천 제공
+                                </div>
+                            </div>
+                            <div class="application-card">
+                                <div class="application-title">기업 웰니스 프로그램</div>
+                                <div class="application-description">
+                                    직원 건강관리 프로그램에서 개인별 체질과 목표에 맞는 식품 추천 서비스
+                                </div>
+                            </div>
+                            <div class="application-card">
+                                <div class="application-title">온라인 식품 커머스</div>
+                                <div class="application-description">
+                                    고객의 건강 목표에 따른 맞춤형 식품 상품 추천 및 큐레이션 서비스
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 기술 상세 -->
+                    <section id="technical">
+                        <h2 class="section-title">기술 상세</h2>
+                        
+                        <div class="tech-details">
+                            <h3 class="tech-title">🔧 핵심 기술 스펙</h3>
+                            <ul class="tech-list">
+                                <li><strong>언어:</strong> Python</li>
+                                <li><strong>데이터 처리:</strong> 가공식품 및 조리식품 통합 분석</li>
+                                <li><strong>점수 체계:</strong> 3가지 독립적 점수의 가중합</li>
+                                <li><strong>추천 개수:</strong> 카테고리별 상위 10개 식품</li>
+                                <li><strong>실시간 처리:</strong> 체중 변화 추세 자동 감지</li>
+            </ul>
+                        </div>
+
+                        <!-- 주의사항 -->
+                        <div class="warning-box">
+                            <h4>⚠️ 사용시 주의사항</h4>
+                            <ul>
+                                <li>개인의 알레르기나 질환이 있는 경우 전문의와 상담 후 사용하세요</li>
+                                <li>급격한 식단 변화는 건강에 해로울 수 있으니 점진적으로 적용하세요</li>
+                                <li>추천된 식품이라도 개인의 소화능력과 선호도를 고려해야 합니다</li>
+                                <li>장기간 사용 시 주기적으로 영양 상태를 점검하는 것이 좋습니다</li>
+                            </ul>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="sidebar">
+                    <!-- Status Card -->
+                    <div class="sidebar-card status-card">
+                        <h3 style="margin-bottom: 15px; color: #8e44ad;">개발 현황</h3>
+                        <div class="info-item">
+                            <span class="info-label">개발 단계</span>
+                            <span class="info-value">실용 프로그램 완성</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">특허 상태</span>
+                            <span class="info-value">특허 출원 완료</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">실증 테스트</span>
+                            <span class="info-value">다이어트 앱 적용 중</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">상용화</span>
+                            <span class="info-value">2025년 상반기</span>
+                        </div>
+                    </div>
+
+                    <!-- Technical Info -->
+                    <div class="sidebar-card">
+                        <h3 style="margin-bottom: 15px; color: #8e44ad;">기술 정보</h3>
+                        <div class="info-item">
+                            <span class="info-label">기술 분야</span>
+                            <span class="info-value">개인화 추천 시스템</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">핵심 알고리즘</span>
+                            <span class="info-value">다중 점수 융합</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">점수 체계</span>
+                            <span class="info-value">개인 맞춤 통합 점수</span>
+                        </div>
+                    </div>
+
+                    <!-- Performance Metrics -->
+                    <div class="sidebar-card">
+                        <h3 style="margin-bottom: 15px; color: #8e44ad;">성능 지표</h3>
+                        <div class="info-item">
+                            <span class="info-label">처리 속도</span>
+                            <span class="info-value">2-3초</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">데이터 규모</span>
+                            <span class="info-value">15,000+ 식품</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">카테고리</span>
+                            <span class="info-value">3개 (간식/본식/반찬)</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">확장성</span>
+                            <span class="info-value">모듈형 구조</span>
+                        </div>
+                    </div>
+
+                    <!-- Research Team -->
+                    <div class="sidebar-card">
+                        <h3 style="margin-bottom: 15px; color: #8e44ad;">연구진</h3>
+                        <div class="info-item">
+                            <span class="info-label">주관 기관</span>
+                            <span class="info-value">서울대학교</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">연구 책임자</span>
+                            <span class="info-value">이기원 교수</span>
+                        </div>
+                    </div>
+
+                    <!-- Related Algorithms -->
+                    <div class="sidebar-card">
+                        <h3 style="margin-bottom: 15px; color: #8e44ad;">관련 알고리즘</h3>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <a href="#" style="text-decoration: none; color: #9b59b6; font-weight: 500;">⚖️ 체중 관리자 맞춤 영양 기준</a>
+                            <a href="#" style="text-decoration: none; color: #9b59b6; font-weight: 500;">🌱 음식 선호도 예측 및 추천</a>
+                            <a href="#" style="text-decoration: none; color: #9b59b6; font-weight: 500;">🍱 사용자 맞춤 식단 제공</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 네비게이션 스크롤 효과
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                document.querySelectorAll('.nav-links a').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                
+                const targetId = this.getAttribute('href').substring(1);
+                const targetSection = document.getElementById(targetId);
+                if (targetSection) {
+                    targetSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // 스크롤 시 네비게이션 수정
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('.nav-links a');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (scrollY >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href').substring(1) === current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

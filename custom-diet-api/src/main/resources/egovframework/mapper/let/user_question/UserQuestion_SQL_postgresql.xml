@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="UserQuestionDAO">
+
+	 <resultMap id = "user_question_mapper" type="egovframework.let.user_question.entity.UserQuestionEntity">
+    	<result property="queId" column="que_id"/>
+        <result property="queSttCd" column="que_sts_cd"/>
+        <result property="queUsrId" column="que_usr_id"/>
+        <result property="queTit" column="que_tit"/>
+        <result property="queCtnt" column="que_ctnt"/>
+        <result property="ansUsrId" column="ans_usr_id"/>
+        <result property="ansCtnt" column="ans_ctnt"/>
+        <result property="queAtchUrl" column="que_atch_url"/>
+		<result property="creUsrId" column="cre_usr_id"/>
+		<result property="creDt" column="cre_dt"/>
+		<result property="updUsrId" column="upd_usr_id"/>
+		<result property="updDt" column="upd_dt"/>
+		<result property="ttlNo" column="ttl_no"/>
+		<result property="queSttNm" column="que_stt_nm"/>
+		<result property="queUsrNm" column="que_usr_nm"/>
+		<result property="queUsrEml" column="que_usr_eml"/>
+		<result property="ansUsrNm" column="ans_usr_nm"/>
+		<result property="ansUsrEml" column="ans_usr_eml"/>
+		<result property="no" column="no"/>
+    </resultMap>
+
+    <select id="findAllUserQuestions" resultMap="user_question_mapper">
+        SELECT 
+			a.*,
+			count(*) over() AS ttl_no,
+			b.intg_cd_dp_val_desc AS que_stt_nm,
+			c.usr_nm AS que_usr_nm,
+			c.usr_eml AS que_usr_eml,
+			d.usr_nm AS ans_usr_nm,
+			d.usr_eml AS ans_usr_eml,
+			count(*) over() + 1 - ROW_NUMBER() over(
+	        	<choose>
+		        	<when test="orderByField != null and orderByField != ''">
+		        		ORDER BY a.${orderByField} <if test="isDesc">DESC</if>
+		        	</when>
+		        	<otherwise>
+		        		ORDER BY a.cre_dt DESC, a.que_id
+		        	</otherwise>
+		        </choose>
+	        ) as no
+		FROM que_mgmt a
+		LEFT JOIN com_intg_cd_dtl b ON (
+			b.intg_cd = 'CD00010'
+			AND a.que_sts_cd = b.intg_cd_val_ctnt 
+		)
+		LEFT JOIN usr_mgmt c ON (
+			a.que_usr_id = c.usr_id 
+		)
+		LEFT JOIN usr_mgmt d ON (
+			a.ans_usr_id = d.usr_id
+		)
+		WHERE 1=1
+		<if test="queTit != null and queTit != ''">
+		<bind name="queTit" value="'%' + queTit.toUpperCase() + '%'" />
+		AND UPPER(a.que_tit) LIKE #{queTit}
+		</if>
+		<if test="queUsrId != null">
+		AND a.que_usr_id = #{queUsrId}
+		</if>
+        <choose>
+        	<when test="orderByField != null and orderByField != ''">
+        		ORDER BY a.${orderByField} <if test="isDesc">DESC</if>
+        	</when>
+        	<otherwise>
+        		ORDER BY a.cre_dt DESC, a.que_id
+        	</otherwise>
+        </choose>
+        <if test="offset != null">
+        OFFSET ${offset}
+        </if>
+        <if test="limit != null">
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <select id="findUserQuestionById" resultMap="user_question_mapper">
+        SELECT 
+        	a.*,
+	   		b.intg_cd_dp_val_desc AS que_stt_nm,
+	   		c.usr_nm AS que_usr_nm,
+			c.usr_eml AS que_usr_eml,
+			d.usr_nm AS ans_usr_nm,
+			d.usr_eml AS ans_usr_eml,
+			1 as no
+		FROM que_mgmt a
+		LEFT JOIN com_intg_cd_dtl b ON (
+			b.intg_cd = 'CD00010'
+			AND a.que_sts_cd = b.intg_cd_val_ctnt 
+		)
+		LEFT JOIN usr_mgmt c ON (
+			a.que_usr_id = c.usr_id 
+		)
+		LEFT JOIN usr_mgmt d ON (
+			a.ans_usr_id = d.usr_id
+		)
+		WHERE a.que_id = #{id} 
+    </select>
+    
+    <insert id="addUserQuestion" useGeneratedKeys="true" keyProperty="queId">
+        INSERT INTO que_mgmt (
+		    que_sts_cd, que_usr_id, que_tit, que_ctnt, que_atch_url, cre_usr_id, cre_dt, upd_usr_id, upd_dt
+		  )
+		  VALUES (
+		    #{queSttCd},
+		    #{queUsrId},
+		    #{queTit},
+		    #{queCtnt},
+		    #{queAtchUrl},
+		    #{creUsrId},
+		    #{creDt},
+		    #{updUsrId},
+		    #{updDt}
+		  )
+    </insert>
+
+    <update id="updateUserQuestion">
+        UPDATE que_mgmt
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="queSttCd != null and queSttCd != ''">
+                que_sts_cd = #{queSttCd},
+            </if>
+            <if test="queUsrId != null">
+                que_usr_id = #{queUsrId},
+            </if>
+            <if test="queTit != null and queTit != ''">
+                que_tit = #{queTit},
+            </if>
+            <if test="queCtnt != null and queCtnt != ''">
+                que_ctnt = #{queCtnt},
+            </if>
+            <if test="ansUsrId != null">
+                ans_usr_id = #{ansUsrId},
+            </if>
+            <if test="ansCtnt != null and ansCtnt != ''">
+                ans_ctnt = #{ansCtnt},
+            </if>
+            <if test="queAtchUrl != null and queAtchUrl != ''">
+                que_atch_url = #{queAtchUrl},
+            </if>
+            <if test="updUsrId != null">
+                upd_usr_id = #{updUsrId},
+            </if>
+            <if test="updDt != null">
+                upd_dt = #{updDt},
+            </if>
+        </trim>
+        WHERE que_id = #{queId}
+    </update>
+    
+    <delete id="deleteUserQuestionById">
+        DELETE FROM que_mgmt
+        WHERE que_id = #{id}
+    </delete>
+    
+</mapper>

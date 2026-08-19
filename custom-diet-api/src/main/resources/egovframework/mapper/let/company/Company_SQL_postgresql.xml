@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="CompanyDAO">
+	
+	<resultMap id = "company_type_mapper" type="egovframework.let.company.entity.CompanyTypeEntity">
+		<result property="coTpId" column="co_tp_id"/>
+        <result property="coTpNm" column="co_tp_nm"/>
+    </resultMap>
+    
+    <resultMap id = "company_mapper" type="egovframework.let.company.entity.CompanyEntity">
+		<result property="coTpId" column="co_tp_id"/>
+        <result property="coId" column="co_id"/>
+		<result property="coNm" column="co_nm"/>
+		<result property="coEngNm" column="co_eng_nm"/>
+		<result property="coBizNo" column="co_biz_no"/>
+		<result property="coNo" column="co_no"/>
+		<result property="coRepNm" column="co_rep_nm"/>
+		<result property="coTtlEmpNo" column="co_ttl_emp_no"/>
+		<result property="coEstFom" column="co_est_fom"/>
+		<result property="coEstDt" column="co_est_dt"/>
+		<result property="coFom" column="co_fom"/>
+		<result property="coPhnNo" column="co_phn_no"/>
+		<result property="coSzCd" column="co_sz_cd"/>
+		<result property="coPalsNo" column="co_pals_no"/>
+		<result property="coAddr" column="co_addr"/>
+		<result property="coEml" column="co_eml"/>
+		<result property="coHpgUrl" column="co_hpg_url"/>
+		<result property="coIndus" column="co_indus"/>
+		<result property="coImgUrl" column="co_img_url"/>
+		<result property="coViewQtt" column="co_view_qty"/>
+		<result property="creUsrId" column="cre_usr_id"/>
+		<result property="creDt" column="cre_dt"/>
+		<result property="updUsrId" column="upd_usr_id"/>
+		<result property="updDt" column="upd_dt"/>
+		<result property="ttlNo" column="ttl_no"/>
+		<result property="coSzNm" column="co_sz_nm"/>
+		<result property="coTpNm" column="co_tp_nm"/>
+		<result property="no" column="no"/>
+    </resultMap>
+  
+    
+    <select id="findCompanyTypeById" resultMap="company_type_mapper">
+        SELECT *
+		FROM co_tp_mgmt
+		WHERE co_tp_id = #{id}
+    </select> 
+
+    <select id="findAllCompanyType" resultMap="company_type_mapper">
+        SELECT *
+		FROM co_tp_mgmt
+    </select> 
+    
+    <select id="findAllCompany" resultMap="company_mapper">
+        SELECT 
+	        a.co_id, 
+	        a.co_nm, 
+		    COALESCE(a.co_eng_nm, '') AS co_eng_nm,
+		    COALESCE(a.co_biz_no, '') AS co_biz_no, 
+		    COALESCE(a.co_no, '') AS co_no, 
+		    COALESCE(a.co_rep_nm, '') AS co_rep_nm, 
+		    COALESCE(a.co_ttl_emp_no, 0) AS co_ttl_emp_no, 
+		    COALESCE(a.co_est_fom, '') AS co_est_fom, 
+		    COALESCE(to_char(a.co_est_dt, 'YYYY-MM-DD'), '') AS co_est_dt,
+		    COALESCE(a.co_fom, '') AS co_fom,  
+		    COALESCE(a.co_phn_no, '') AS co_phn_no, 
+		    COALESCE(a.co_sz_cd, '') AS co_sz_cd, 
+		    COALESCE(a.co_pals_no, '') AS co_pals_no, 
+		    COALESCE(a.co_addr, '') AS co_addr, 
+		    COALESCE(a.co_eml, '') AS co_eml, 
+		    COALESCE(a.co_hpg_url, '') AS co_hpg_url, 
+		    COALESCE(a.co_indus, '') AS co_indus, 
+		    COALESCE(a.co_img_url, '') AS co_img_url, 
+		    COALESCE(a.co_view_qty, 0) AS co_view_qty, 
+	        a.cre_usr_id, 
+	        a.cre_dt, 
+	        a.upd_usr_id, 
+	        a.upd_dt, 
+	        a.co_tp_id, 
+	        count(*) over() AS ttl_no, 
+	        b.intg_cd_dp_val_desc AS co_sz_nm,
+	        c.co_tp_nm,
+	        count(*) over() + 1 - ROW_NUMBER() over(
+	        	<choose>
+		        	<when test="orderByField != null and orderByField != ''">
+		        		ORDER BY a.${orderByField} <if test="isDesc">DESC</if>
+		        	</when>
+		        	<otherwise>
+		        		ORDER BY a.cre_dt DESC, a.co_id
+		        	</otherwise>
+		        </choose>
+	        ) as no
+		FROM co_mgmt a 
+		LEFT JOIN com_intg_cd_dtl b ON (
+			b.intg_cd = 'CD00009'
+			AND a.co_sz_cd = b.intg_cd_val_ctnt
+		)
+		LEFT JOIN co_tp_mgmt c ON (
+			a.co_tp_id = c.co_tp_id
+		)
+		WHERE 1 = 1
+		<if test="coSzCd != null and coSzCd != ''">
+       	AND a.co_sz_cd = #{coSzCd}
+        </if>
+        <if test="coNm != null and coNm != ''">
+		<bind name="coNm" value="'%' + coNm.toUpperCase() + '%'" />
+		AND UPPER(a.co_nm) LIKE #{coNm}
+		</if>
+		<if test="coRepNm != null and coRepNm != ''">
+		<bind name="coRepNm" value="'%' + coRepNm.toUpperCase() + '%'" />
+		AND UPPER(a.co_rep_nm) LIKE #{coRepNm}
+		</if>
+     	<if test="coEstYrFm != null and coEstYrFm != ''">
+        AND a.co_est_dt >= to_timestamp(#{coEstYrFm}, 'YYYY')
+        </if>
+        <if test="coEstYrTo != null and coEstYrTo != ''">
+        AND a.co_est_dt &lt;= to_timestamp(#{coEstYrTo}, 'YYYY') + INTERVAL '1 year' - INTERVAL '1 second'
+        </if>
+        <if test="coTpId != null">
+        AND a.co_tp_id = #{coTpId}
+        </if>
+        <if test="coTpNm != null and coTpNm != ''">
+        <bind name="coTpNm" value="'%' + coTpNm.toUpperCase() + '%'" />
+        AND UPPER(c.co_tp_nm) LIKE #{coTpNm}
+        </if>
+		<choose>
+        	<when test="orderByField != null and orderByField != ''">
+        		ORDER BY a.${orderByField} <if test="isDesc">DESC</if>
+        	</when>
+        	<otherwise>
+        		ORDER BY a.cre_dt DESC, a.co_id
+        	</otherwise>
+        </choose>
+        <if test="offset != null">
+        OFFSET ${offset}
+        </if>
+        <if test="limit != null">
+        LIMIT ${limit}
+        </if>
+    </select> 
+    
+    <select id="findCompanyById" resultMap="company_mapper">
+    	SELECT 
+    		a.co_id, 
+	        a.co_nm, 
+ 			COALESCE(a.co_eng_nm, '') AS co_eng_nm,
+		    COALESCE(a.co_biz_no, '') AS co_biz_no, 
+		    COALESCE(a.co_no, '') AS co_no, 
+		    COALESCE(a.co_rep_nm, '') AS co_rep_nm, 
+		    COALESCE(a.co_ttl_emp_no, 0) AS co_ttl_emp_no, 
+		    COALESCE(a.co_est_fom, '') AS co_est_fom, 
+		    COALESCE(to_char(a.co_est_dt, 'YYYY-MM-DD'), '') AS co_est_dt,
+		    COALESCE(a.co_fom, '') AS co_fom,  
+		    COALESCE(a.co_phn_no, '') AS co_phn_no, 
+		    COALESCE(a.co_sz_cd, '') AS co_sz_cd, 
+		    COALESCE(a.co_pals_no, '') AS co_pals_no, 
+		    COALESCE(a.co_addr, '') AS co_addr, 
+		    COALESCE(a.co_eml, '') AS co_eml, 
+		    COALESCE(a.co_hpg_url, '') AS co_hpg_url, 
+		    COALESCE(a.co_indus, '') AS co_indus, 
+		    COALESCE(a.co_img_url, '') AS co_img_url, 
+		    COALESCE(a.co_view_qty, 0) AS co_view_qty, 
+	        a.cre_usr_id, 
+	        a.cre_dt, 
+	        a.upd_usr_id, 
+	        a.upd_dt, 
+	        a.co_tp_id, 
+    		b.intg_cd_dp_val_desc AS co_sz_nm,
+    		c.co_tp_nm,
+    		1 as no
+    	FROM co_mgmt a
+    	LEFT JOIN com_intg_cd_dtl b ON (
+			b.intg_cd = 'CD00009'
+			AND a.co_sz_cd = b.intg_cd_val_ctnt
+		)
+		LEFT JOIN co_tp_mgmt c ON (
+			a.co_tp_id = c.co_tp_id
+		)
+    	WHERE a.co_id = #{coId}
+    </select>
+    
+    <insert id="addCompany" useGeneratedKeys="true" keyProperty="coId">
+		INSERT INTO co_mgmt (
+		    co_nm, co_eng_nm, co_biz_no, co_no, co_rep_nm, co_ttl_emp_no,
+		    co_est_fom, co_est_dt, co_fom, co_phn_no, co_sz_cd, co_pals_no,
+		    co_addr, co_eml, co_hpg_url, co_indus, co_img_url, co_view_qty,
+		    co_tp_id, cre_usr_id, cre_dt, upd_usr_id, upd_dt
+		)
+		 VALUES (
+		    #{coNm}, #{coEngNm}, #{coBizNo}, #{coNo}, #{coRepNm}, #{coTtlEmpNo},
+		    #{coEstFom}, to_timestamp(#{coEstDt}, 'YYYY-MM-DD'), #{coFom}, #{coPhnNo}, #{coSzCd}, #{coPalsNo},
+		    #{coAddr}, #{coEml}, #{coHpgUrl}, #{coIndus}, 
+		    (#{coImgUrl} || (SELECT currval('co_mgmt_co_id_seq'))), 0 , #{coTpId},
+			#{creUsrId}, #{creDt}, #{updUsrId}, #{updDt}
+		)
+    </insert>
+    
+    <update id="updateCompany">
+    	UPDATE co_mgmt
+    	<trim prefix="SET" suffixOverrides=",">
+            <if test="coNm != null and coNm != ''">co_nm = #{coNm},</if>
+            <if test="coEngNm != null and coEngNm != ''">co_eng_nm = #{coEngNm},</if>
+            <if test="coBizNo != null and coBizNo != ''">co_biz_no = #{coBizNo},</if>
+            <if test="coNo != null and coNo != ''">co_no = #{coNo},</if>
+            <if test="coRepNm != null and coRepNm != ''">co_rep_nm = #{coRepNm},</if>
+            <if test="coTtlEmpNo != null">co_ttl_emp_no = #{coTtlEmpNo},</if>
+            <if test="coEstFom != null and coEstFom != ''">co_est_fom = #{coEstFom},</if>
+            <if test="coEstDt != null">co_est_dt = to_timestamp(#{coEstDt}, 'YYYY-MM-DD'),</if>
+            <if test="coFom != null and coFom != ''">co_fom = #{coFom},</if>
+            <if test="coPhnNo != null and coPhnNo != ''">co_phn_no = #{coPhnNo},</if>
+            <if test="coSzCd != null and coSzCd != ''">co_sz_cd = #{coSzCd},</if>
+            <if test="coPalsNo != null and coPalsNo != ''">co_pals_no = #{coPalsNo},</if>
+            <if test="coAddr != null and coAddr != ''">co_addr = #{coAddr},</if>
+            <if test="coEml != null and coEml != ''">co_eml = #{coEml},</if>
+            <if test="coHpgUrl != null and coHpgUrl != ''">co_hpg_url = #{coHpgUrl},</if>
+            <if test="coIndus != null and coIndus != ''">co_indus = #{coIndus},</if>
+            <if test="coImgUrl != null and coImgUrl != ''">co_img_url = #{coImgUrl},</if>
+            <if test="coViewQtt != null">co_view_qty = #{coViewQtt},</if>
+            <if test="coTpId != null">co_tp_id = #{coTpId},</if>
+            <if test="updUsrId != null">upd_usr_id = #{updUsrId},</if>
+            <if test="updDt != null">upd_dt = #{updDt},</if>
+        </trim>
+        WHERE co_id = #{coId}
+    </update>
+    
+    <delete id="deleteCompany">
+    	DELETE FROM co_mgmt
+    	WHERE co_id = #{coId}
+    </delete>
+    
+    <update id="increaseViewById">
+    	UPDATE co_mgmt 
+		SET co_view_qty = (
+			SELECT COALESCE(co_view_qty, 0) + 1
+			FROM co_mgmt 
+			WHERE co_id = #{coId}
+		)
+		WHERE co_id = #{coId}
+    </update>
+    
+    
+</mapper>

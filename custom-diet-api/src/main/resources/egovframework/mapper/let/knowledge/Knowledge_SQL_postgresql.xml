@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="KnowledgeDAO">
+
+	<resultMap id="knowledge_mapper" type="egovframework.let.knowledge.entity.KnowledgeEntity">
+		<result property="kwlgId" column="kwlg_id"/>
+		<result property="kwlgTit" column="kwlg_tit"/>
+		<result property="kwlgFuncTpCd" column="kwlg_func_tp_cd"/>
+		<result property="kwlgDietTpCd" column="kwlg_diet_tp_cd"/>
+		<result property="kwlgViewQtt" column="kwlg_view_qty"/>
+		<result property="kwlgLinkUrl" column="kwlg_link_url"/>
+		<result property="kwlgAtchUrl" column="kwlg_atch_url"/>
+		<result property="kwlgAut" column="kwlg_aut"/>
+		<result property="creUsrId" column="cre_usr_id"/>
+		<result property="creDt" column="cre_dt"/>
+		<result property="updUsrId" column="upd_usr_id"/>
+		<result property="updDt" column="upd_dt"/>
+		<result property="ttlNo" column="ttl_no"/>
+		<result property="kwlgFuncTpNm" column="kwlg_func_tp_nm"/>
+		<result property="kwlgDietTpNm" column="kwlg_diet_tp_nm"/>
+		<result property="no" column="no"/>
+    </resultMap>
+   
+   <select id="findAllKnowledge" resultMap="knowledge_mapper">
+	   	SELECT 
+	   		a.kwlg_id, 
+	   		a.kwlg_tit, 
+	   		a.kwlg_func_tp_cd, 
+	   		a.kwlg_diet_tp_cd, 
+	   		COALESCE(a.kwlg_view_qty, 0) AS kwlg_view_qty, 
+	   		a.kwlg_link_url, 
+	   		a.kwlg_atch_url, 
+	   		a.kwlg_aut, 
+	   		a.cre_usr_id, 
+	   		a.cre_dt, 
+	   		a.upd_usr_id, 
+	   		a.upd_dt,
+	   		count(*) over() AS ttl_no,
+	   		b.intg_cd_dp_val_desc AS kwlg_func_tp_nm,
+	   		c.intg_cd_dp_val_desc AS kwlg_diet_tp_nm,
+	   		count(*) over() + 1 - ROW_NUMBER() over(
+	        	<choose>
+		        	<when test="orderByField != null and orderByField != ''">
+		        		ORDER BY a.${orderByField} <if test="isDesc">DESC</if>
+		        	</when>
+		        	<otherwise>
+		        		ORDER BY a.cre_dt DESC, a.kwlg_id
+		        	</otherwise>
+		        </choose>
+	        ) as no
+		FROM kwlg_mgmt a
+		LEFT JOIN com_intg_cd_dtl b ON (
+			b.intg_cd = 'CD00008'
+			AND a.kwlg_func_tp_cd = b.intg_cd_val_ctnt 
+		)
+		LEFT JOIN com_intg_cd_dtl c ON (
+			c.intg_cd = 'CD00011'
+			AND a.kwlg_diet_tp_cd = c.intg_cd_val_ctnt 
+		)
+		WHERE 1 = 1
+		<if test="kwlgTit != null and kwlgTit != ''">
+		<bind name="kwlgTit" value="'%' + kwlgTit.toUpperCase() + '%'" />
+       	AND UPPER(a.kwlg_tit) LIKE #{kwlgTit}
+        </if>
+        <if test="creDtFm != null">
+       	AND a.cre_dt >= #{creDtFm}
+        </if>
+        <if test="creDtTo != null">
+       	AND a.cre_dt &lt;= #{creDtTo}::TIMESTAMP + INTERVAL '23 hours 59 minutes 59 seconds'
+        </if>
+        <if test="kwlgFuncTpCd != null and kwlgFuncTpCd != ''">
+       	AND a.kwlg_func_tp_cd = #{kwlgFuncTpCd}
+        </if>
+        <if test="kwlgDietTpCd != null and kwlgDietTpCd != ''">
+       	AND a.kwlg_diet_tp_cd = #{kwlgDietTpCd}
+        </if>
+        <choose>
+        	<when test="orderByField != null and orderByField != ''">
+        		ORDER BY a.${orderByField} <if test="isDesc">DESC</if>
+        	</when>
+        	<otherwise>
+        		ORDER BY a.cre_dt DESC, a.kwlg_id
+        	</otherwise>
+        </choose>
+        <if test="offset != null">
+        OFFSET ${offset}
+        </if>
+        <if test="limit != null">
+        LIMIT ${limit}
+        </if>
+   </select>
+   
+    <select id="findKnowledgeById" resultMap="knowledge_mapper">
+	   	SELECT 
+	   		a.kwlg_id, 
+	   		a.kwlg_tit, 
+	   		a.kwlg_func_tp_cd, 
+	   		a.kwlg_diet_tp_cd, 
+	   		COALESCE(a.kwlg_view_qty, 0) AS kwlg_view_qty, 
+	   		a.kwlg_link_url, 
+	   		a.kwlg_atch_url, 
+	   		a.kwlg_aut, 
+	   		a.cre_usr_id, 
+	   		a.cre_dt, 
+	   		a.upd_usr_id, 
+	   		a.upd_dt,
+	   		count(*) over() AS ttl_no,
+	   		b.intg_cd_dp_val_desc AS kwlg_func_tp_nm,
+	   		c.intg_cd_dp_val_desc AS kwlg_diet_tp_nm,
+	   		1 as no
+		FROM kwlg_mgmt a
+		LEFT JOIN com_intg_cd_dtl b ON (
+			b.intg_cd = 'CD00008'
+			AND a.kwlg_func_tp_cd = b.intg_cd_val_ctnt 
+		)
+		LEFT JOIN com_intg_cd_dtl c ON (
+			c.intg_cd = 'CD00011'
+			AND a.kwlg_diet_tp_cd = c.intg_cd_val_ctnt 
+		)
+		WHERE 1 = 1
+		AND a.kwlg_id = #{id}
+   </select>
+    
+    <insert id="addKnowledge" useGeneratedKeys="true" keyProperty="kwlgId">
+	  INSERT INTO kwlg_mgmt (
+	    kwlg_tit, kwlg_func_tp_cd, kwlg_diet_tp_cd, kwlg_view_qty, kwlg_link_url, kwlg_atch_url, kwlg_aut, cre_usr_id, cre_dt, upd_usr_id, upd_dt
+	  )
+	  VALUES (
+	    #{kwlgTit},
+	    #{kwlgFuncTpCd},
+	    #{kwlgDietTpCd},
+	    0,
+	    #{kwlgLinkUrl},
+	    (#{kwlgAtchUrl} || (SELECT currval('kwlg_mgmt_kwlg_id_seq'))),
+	    #{kwlgAut},
+	    #{creUsrId},
+	    #{creDt},
+	    #{updUsrId},
+	    #{updDt}
+	  )
+	</insert>
+
+    <update id="updateKnowledge">
+    	UPDATE kwlg_mgmt
+    	<trim prefix="SET" suffixOverrides=",">
+		    <if test="kwlgTit != null and kwlgTit != ''">
+		      kwlg_tit = #{kwlgTit},
+		    </if>
+		    <if test="kwlgFuncTpCd != null and kwlgFuncTpCd != ''">
+		      kwlg_func_tp_cd = #{kwlgFuncTpCd},
+		    </if>
+		    <if test="kwlgDietTpCd != null and kwlgDietTpCd != ''">
+		      kwlg_diet_tp_cd = #{kwlgDietTpCd},
+		    </if>
+		    <if test="kwlgViewQtt != null">
+		      kwlg_view_qty = #{kwlgViewQtt},
+		    </if>
+		    <if test="kwlgLinkUrl != null and kwlgLinkUrl != ''">
+		      kwlg_link_url = #{kwlgLinkUrl},
+		    </if>
+		    <if test="kwlgAtchUrl != null and kwlgAtchUrl != ''">
+		      kwlg_atch_url = #{kwlgAtchUrl},
+		    </if>
+		    <if test="kwlgAut != null and kwlgAut != ''">
+		      kwlg_aut = #{kwlgAut},
+		    </if>
+		    <if test="updUsrId != null">
+		      upd_usr_id = #{updUsrId},
+		    </if>
+		    <if test="updDt != null">
+		      upd_dt = #{updDt},
+		    </if>
+        </trim>
+        WHERE kwlg_id = #{kwlgId}
+    </update>
+    
+    <delete id="deleteKnowledgeById">
+    	DELETE FROM kwlg_mgmt
+    	WHERE kwlg_id = #{id}
+    </delete>
+    
+    <update id="increaseViewById">
+    	UPDATE kwlg_mgmt 
+		SET kwlg_view_qty = (
+			SELECT COALESCE(kwlg_view_qty, 0) + 1
+			FROM kwlg_mgmt 
+			WHERE kwlg_id = #{id}
+		)
+		WHERE kwlg_id = #{id}
+    </update>
+
+</mapper>

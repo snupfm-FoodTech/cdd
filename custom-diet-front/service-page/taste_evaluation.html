@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>맛 선호도 및 민감도 평가 - CDD</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f8f9fa; 
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+            color: white;
+            padding: 40px 0;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: background 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .header-info {
+            flex: 1;
+        }
+
+        .algorithm-category {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .algorithm-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .algorithm-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .algorithm-icon {
+            font-size: 4rem;
+            opacity: 0.8;
+        }
+
+        /* Navigation */
+        nav {
+            background: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: #2a5298;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 60px 0;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 40px;
+        }
+
+        .main-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .sidebar-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: #1e3c72;
+        }
+
+        .section-content {
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .feature-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border-left: 4px solid #2a5298;
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #2a5298;
+        }
+
+        .feature-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #1e3c72;
+        }
+
+        .feature-description {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+        }
+
+        .calculation-method {
+            background: #e8f4fd;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #1565c0;
+            border-left: 3px solid #1976d2;
+        }
+
+        /* Process Flow */
+        .process-flow {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .process-step {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .process-step:not(:last-child):after {
+            content: "→";
+            position: absolute;
+            right: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
+            color: #2a5298;
+            font-weight: bold;
+        }
+
+        .step-number {
+            background: #2a5298;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .step-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .step-description {
+            font-size: 0.8rem;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        /* Algorithm Diagram */
+        .algorithm-diagram {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .diagram-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1e3c72;
+        }
+
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .module-box {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .module-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .module-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* Sidebar Cards */
+        .status-card {
+            border-left: 4px solid #2a5298;
+        }
+
+        .status-badge {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .info-value {
+            color: #666;
+        }
+
+        /* Applications */
+        .application-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .application-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border-left: 4px solid #2a5298;
+        }
+
+        .application-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #1e3c72;
+        }
+
+        .application-description {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        /* Technical Details */
+        .tech-details {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+
+        .tech-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1e3c72;
+        }
+
+        .tech-list {
+            list-style: none;
+        }
+
+        .tech-list li {
+            padding: 8px 0;
+            color: #555;
+        }
+
+        .tech-list li strong {
+            color: #2a5298;
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 30px 0;
+        }
+
+        .warning-box h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .warning-box ul {
+            color: #856404;
+            margin-left: 20px;
+        }
+
+        /* Results Guide */
+        .results-guide {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .result-card {
+            background: #f0fdf4;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #2a5298;
+        }
+
+        .result-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #1e3c72;
+        }
+
+        .result-description {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+
+        .result-detail {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .modules-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .process-step:not(:last-child):after {
+                display: none;
+            }
+            
+            .nav-links {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .algorithm-title {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <button class="back-btn" onclick="window.location.href='algorithms.html'">←</button>
+                <div class="header-info">
+                    <div class="algorithm-category">식이 교육 알고리즘</div>
+                    <h1 class="algorithm-title">맛 선호도 및 민감도 평가</h1>
+                    <p class="algorithm-subtitle">미각 테스트 및 DTC 유전자 검사 결과 기반 개인 MPTI(My Personal Taste Index) 도출</p>
+                </div>
+                <div class="algorithm-icon">👅</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <ul class="nav-links">
+                <li><a href="#overview" class="active">개요</a></li>
+                <li><a href="#features">핵심 특징</a></li>
+                <li><a href="#process">작동 원리</a></li>
+                <li><a href="#applications">활용 분야</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="content-grid">
+                <!-- Main Section -->
+                <div class="main-section">
+                    <!-- 개요 -->
+                    <section id="overview">
+                        <h2 class="section-title">알고리즘 개요</h2>
+                        <div class="section-content">
+                            <p>
+                                <strong>맛 선호도 및 민감도 평가 알고리즘</strong>은 두 가지 테스트를 통해 <strong>개인의 맛 프로파일(MPTI)</strong>을 평가하는 시스템입니다.
+                                <strong>식품의약품안전처의 단맛·짠맛 미각판정 도구 프로그램과 관련 문헌</strong>을 참고하여 설계한<strong> 맛 선호도 및 민감도 테스트 결과와 DTC 유전자 검사 데이터</strong>를 통합 분석합니다. 이를 통해 <strong>단맛·짠맛에 대한 개인의 선호도와 민감도를 종합적으로 평가</strong>하고, 맞춤형 소스를 추천하는 <strong>개인 맞춤형 푸드 솔루션</strong>을 제공합니다.
+
+                            </p>
+                        </div>
+
+                        <!-- Algorithm Diagram -->
+                        <div class="algorithm-diagram">
+                            <div class="diagram-title">맛 선호도 및 민감도 평가 시스템 주요 기능</div>
+                            <div class="modules-grid">
+                                <div class="module-box">
+                                    <div class="module-icon">👤</div>
+                                    <div class="module-name">사용자 정보 입력</div>
+                                </div>
+                                <div class="module-box">
+                                    <div class="module-icon">👅</div>
+                                    <div class="module-name">단맛/짠맛 테스트 결과 입력</div>
+                                </div>
+                                <div class="module-box">
+                                    <div class="module-icon">🧬</div>
+                                    <div class="module-name">단맛/짠맛 유전자 검사 결과 입력</div>
+                                </div>
+                                <div class="module-box">
+                                    <div class="module-icon">📑</div>
+                                    <div class="module-name">개인 맛 MPTI 평가지 도출</div>
+                                </div>
+                                <div class="module-box">
+                                    <div class="module-icon">🥫</div>
+                                    <div class="module-name">소스 추천</div>
+                                </div>
+                            </div>
+                            <p style="color: #666; font-size: 0.9rem; margin-top: 15px;">
+                                맛 선호도 및 민감도 테스트와 DTC 유전자 검사 결과를 기반으로 개인 맞춤 MPTI를 제공합니다.
+                            </p>
+                        </div>
+                    </section>
+
+                    <!-- 핵심 특징 -->
+                    <section id="features">
+                        <h2 class="section-title">핵심 특징</h2>
+                        
+                        <div class="features-grid">
+                            <div class="feature-card">
+                                <div class="feature-icon">👅</div>
+                                <div class="feature-title">선호도 및 민감도 통합 평가</div>
+                                <div class="feature-description">
+                                    단맛·짠맛에 대한 선호도 및 민감도를 미각 테스트와 DTC 유전자 검사 결과를 통합해 평가합니다.
+                                </div>
+                                <div class="calculation-method">
+                                    <strong>특징:</strong> 미각 테스트(80%) + 유전자 데이터(20%) 기반 개인화 분석
+                                </div>
+                            </div>
+
+                            <div class="feature-card">
+                                <div class="feature-icon">🧬</div>
+                                <div class="feature-title">유전자 기반 맛 민감도 반영</div>
+                                <div class="feature-description">
+                                    TAS1R2, FGF21, FTO, SCNN1B 유전자 데이터를 활용해 선천적 맛 민감도를 평가합니다.
+                                </div>
+                                <div class="calculation-method">
+                                    <strong>기술:</strong> DTC 유전자 검사 연계 맞춤형 분석
+                                </div>
+                            </div>
+
+                            <div class="feature-card">
+                                <div class="feature-icon">🍯</div>
+                                <div class="feature-title">당류·나트륨 함량 기반 소스 추천</div>
+                                <div class="feature-description">
+                                    가중평균 점수를 기반으로 당류·나트륨 함량을 고려한 소스를 추천합니다.
+                                </div>
+                                <div class="calculation-method">
+                                    <strong>특징:</strong> 당류·나트륨 함량 기반 상위 30%, 중간 40%, 하위 30% 소스 그룹 필터링
+                                </div>
+                            </div>
+
+                            <div class="feature-card">
+                                <div class="feature-icon">📱</div>
+                                <div class="feature-title">직관적 사용자 인터페이스</div>
+                                <div class="feature-description">
+                                    사용자가 맛 테스트 및 유전자 검사 결과를 입력하고 MPTI를 확인할 수 있는 UI를 제공합니다.
+                                </div>
+                                <div class="calculation-method">
+                                    <strong>기능:</strong> 개인 맛 프로파일 시각화 및 소스 추천 페이지
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 작동 원리 -->
+                    <section id="process">
+                        <h2 class="section-title">작동 원리</h2>
+                        <div class="section-content">
+                            <p>알고리즘은 다음과 같은 5단계 프로세스를 통해 맞춤형 소스를 추천합니다:</p>
+                        </div>
+    
+                        <div class="process-flow">
+                            <div class="process-step">
+                                <div class="step-number">1</div>
+                                <div class="step-title">사용자 정보 입력</div>
+                                <div class="step-description">맛 테스트 결과(단맛·짠맛 선호도) 및 DTC 유전자 검사 데이터 입력</div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number">2</div>
+                                <div class="step-title">맛 선호도 및 민감도 점수화</div>
+                                <div class="step-description">테스트 결과는 80%, 유전자 검사 결과는 20% 가중치를 부여하여 가중평균 점수 계산</div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number">3</div>
+                                <div class="step-title">맛 프로파일(MPTI) 분류</div>
+                                <div class="step-description">가중평균 점수에 따라 개인의 맛 유형(MPTI)을 찔이, 보통, 부심으로 분류</div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number">4</div>
+                                <div class="step-title">소스 후보 필터링</div>
+                                <div class="step-description">당류·나트륨 함량 그룹별(상위/중간/하위)로 소스를 필터링합니다.</div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number">5</div>
+                                <div class="step-title">최종 소스 추천</div>
+                                <div class="step-description">최종 4가지 소스를 추천합니다.</div>
+                            </div>
+                        </div>
+
+                        <!-- 기술 상세 -->
+                        <div class="tech-details">
+                            <h3 class="tech-title">핵심 기술 스펙</h3>
+                            <ul class="tech-list">
+                                <li><strong>분석 프레임워크:</strong> 맛 테스트 및 DTC 유전자 데이터 통합 기반 평가</li>
+                                <li><strong>가중치 적용:</strong> 맛 테스트(80%) + 유전자 검사(20%) 반영 </li>
+                                <li><strong>유전자 마커:</strong> TAS1R2, FGF21, FTO, SCNN1B 등 단맛·짠맛 민감도 관련 유전자 </li>
+                                <li><strong>데이터 소스:</strong> 식품의약품안전처 식품영양성분 통합 DB + 프랜차이즈 소스 데이터</li>
+                                <li><strong>지원 언어:</strong> 한국어</li>
+                            </ul>
+                        </div>
+
+                        <!-- 주의사항 -->
+                        <div class="warning-box">
+                            <h4>⚠️ 사용시 주의사항</h4>
+                            <ul>
+                                <li>맛 테스트 및 유전자 검사 결과를 정확히 입력해야 개인 MPTI가 도출됩니다.</li>
+                                <li>추천된 소스는 참고용이며 실제 적용 전 개인 상황을 고려해야 합니다.</li>
+                                <li>알레르기 유발 가능성이 있는 소스는 별도로 확인이 필요합니다.</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- 활용 분야 -->
+                    <section id="applications">
+                        <section id="applications">
+                            <h2 class="section-title">활용 분야</h2>
+                            <div class="section-content">
+                                <p>이 알고리즘은 맛 프로파일링과 맞춤형 식품 추천 분야에서 다양하게 활용될 수 있습니다:</p>
+                            </div>
+                        
+                            <div class="application-grid">
+                                <div class="application-card">
+                                    <div class="application-title">맞춤형 소스 추천</div>
+                                    <div class="application-description">
+                                        개인의 맛 선호도 및 민감도를 기반으로 한 프랜차이즈 소스 추천 서비스
+                                    </div>
+                                </div>
+                                <div class="application-card">
+                                    <div class="application-title">식품 개발 및 마케팅</div>
+                                    <div class="application-description">
+                                        소비자 맛 프로파일을 기반으로 맞춤형 식품 및 마케팅 전략 설계
+                                    </div>
+                                </div>
+                                <div class="application-card">
+                                    <div class="application-title">영양교육 지원</div>
+                                    <div class="application-description">
+                                        개인의 맛 프로파일을 기반으로 나트륨 및 당류 저감화 교육 진행
+                                    </div>
+                                </div>
+                            </div>
+                    </section>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="sidebar">
+                    <!-- Status Card -->
+                    <div class="sidebar-card status-card">
+                        <h3 style="margin-bottom: 15px; color: #1e3c72;">개발 현황</h3>
+                        <div class="info-item">
+                            <span class="info-label">개발 단계</span>
+                            <span class="info-value">개발 완료</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">연구 개발자</span>
+                            <span class="info-value">류혜리</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">상용화 계획</span>
+                            <span class="info-value">미각 교육 캠프 운영 중</span>
+                        </div>
+                    </div>
+
+                    <!-- Technical Info -->
+                    <div class="sidebar-card">
+                        <h3 style="margin-bottom: 15px; color: #1e3c72;">교육 내용</h3>
+                        <div class="info-item">
+                            <span class="info-label" style="display: inline-block; width: 100px;">주요 활동</span>
+                            <span class="info-value" style="display: inline-block; width: calc(100% - 100px);">
+                                맛 민감도 및 선호도 평가
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label" style="display: inline-block; width: 100px;">프로그램 구성</span>
+                            <span class="info-value" style="display: inline-block; width: calc(100% - 100px);">
+                                미각 교육 키트 체험, 데이터 입력 및 맛 프로파일 분석
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label" style="display: inline-block; width: 100px;">결과 제공</span>
+                            <span class="info-value" style="display: inline-block; width: calc(100% - 100px);">
+                                개인 맞춤 맛 프로파일(MPTI) 및 소스 추천
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label" style="display: inline-block; width: 100px;">영양</span>
+                            <span class="info-value" style="display: inline-block; width: calc(100% - 100px);">
+                                나트륨 및 당류 저감화 교육
+                            </span>
+                        </div>
+                    </div>
+                        
+
+
+                    <!-- Performance Metrics -->
+                    <div class="sidebar-card">
+                        <h3 style="margin-bottom: 15px; color: #1e3c72;">성능 지표</h3>
+                        <div class="info-item">
+                            <span class="info-label">처리 시간</span>
+                            <span class="info-value">10~20초</span>
+                    </div>

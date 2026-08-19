@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="FaqDAO">
+
+	<resultMap id="faq_mapper"
+		type="egovframework.let.faq.entity.FaqEntity">
+		<result property="faqId" column="faq_id" />
+		<result property="faqQueCtnt" column="faq_que_ctnt" />
+		<result property="faqAnsCtnt" column="faq_ans_ctnt" />
+		<result property="creUsrId" column="cre_usr_id" />
+		<result property="creDt" column="cre_dt" />
+		<result property="updUsrId" column="upd_usr_id" />
+		<result property="updDt" column="upd_dt" />
+		<result property="ttlNo" column="ttl_no" />
+		<result property="no" column="no" />
+	</resultMap>
+
+
+	<select id="findFaqById" resultMap="faq_mapper">
+		SELECT *, 1 as no
+		FROM faq_mgmt
+		where faq_id = #{id}
+	</select>
+
+	<insert id="addFaq" useGeneratedKeys="true" keyProperty="faqId">
+		INSERT INTO faq_mgmt (
+		faq_que_ctnt, faq_ans_ctnt, cre_usr_id, cre_dt, upd_usr_id, upd_dt
+		)
+		VALUES (
+		#{faqQueCtnt}, #{faqAnsCtnt}, #{creUsrId}, #{creDt}, #{updUsrId},
+		#{updDt}
+		)
+	</insert>
+
+
+	<update id="updateFaqById">
+		UPDATE faq_mgmt
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="faqQueCtnt != null and faqQueCtnt != ''">faq_que_ctnt = #{faqQueCtnt},</if>
+			<if test="faqAnsCtnt != null and faqAnsCtnt != ''">faq_ans_ctnt = #{faqAnsCtnt},</if>
+			<if test="creUsrId != null">cre_usr_id = #{creUsrId},</if>
+			<if test="creDt != null">cre_dt = #{creDt},</if>
+			<if test="updUsrId != null">upd_usr_id = #{updUsrId},</if>
+			<if test="updDt != null">upd_dt = #{updDt},</if>
+		</trim>
+		WHERE faq_id = #{faqId}
+	</update>
+
+
+	<delete id="deleteFaqById">
+		DELETE FROM faq_mgmt
+		WHERE faq_id = #{id}
+	</delete>
+
+
+	<select id="findAllFaq" resultMap="faq_mapper">
+		SELECT
+		*,
+		count(*) over() AS ttl_no,
+		count(*) over() + 1 - ROW_NUMBER() over(ORDER BY cre_dt DESC, faq_id) as no
+		FROM faq_mgmt
+		WHERE 1=1
+		<if test="faqQueCtnt != null and faqQueCtnt != ''">
+			<bind name="faqQueCtnt"
+				value="'%' + faqQueCtnt.toUpperCase() + '%'" />
+			AND UPPER(faq_que_ctnt) LIKE #{faqQueCtnt}
+		</if>
+		<if test="faqAnsCtnt != null and faqAnsCtnt != ''">
+			<bind name="faqAnsCtnt"
+				value="'%' + faqAnsCtnt.toUpperCase() + '%'" />
+			AND UPPER(faq_ans_ctnt) LIKE #{faqAnsCtnt}
+		</if>
+		ORDER BY cre_dt DESC, faq_id
+		<if test="offset != null">
+			OFFSET ${offset}
+		</if>
+		<if test="limit != null">
+			LIMIT ${limit}
+		</if>
+	</select>
+
+
+</mapper>

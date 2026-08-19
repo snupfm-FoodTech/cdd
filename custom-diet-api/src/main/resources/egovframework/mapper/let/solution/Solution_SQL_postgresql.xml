@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="SolutionDAO">
+
+	<resultMap id = "solution_type_dto" type="egovframework.let.solution.dto.SolutionTypeDto">
+		<id property="id" column="sol_tp_id"/>
+		<result property="title" column="sol_tp_tit" />
+		<result property="description" column="sol_tp_desc" />
+		<result property="tag" column="sol_tp_tag" />
+		<result property="iconUrl" column="icon_url" />
+		<result property="updatedDate" column="upd_dt" />
+    </resultMap>
+    
+    <resultMap id = "solution_content_dto" type="egovframework.let.solution.dto.SolutionContentDto">
+		<id property="id" column="sol_ctnt_id"/>
+		<result property="title" column="sol_ctnt_tit" />
+		<result property="subTitle" column="sol_ctnt_sub_tit" />
+		<result property="tag" column="sol_ctnt_tag" />
+		<result property="description" column="sol_ctnt_desc" typeHandler="egovframework.com.config.mybatis.ObjectTypeHandler"/>
+		<result property="iconUrl" column="icon_url" />
+		<result property="typeId" column="sol_tp_id" />
+    </resultMap>
+    
+    <select id="countAllSolutionType" resultType="java.lang.Long">
+    	SELECT COUNT(*)
+    	FROM sol_tp_mgmt
+    </select>
+    
+    <select id="findAllSolutionType" resultMap="solution_type_dto">
+    	SELECT 
+    		sol_tp_id, 
+			sol_tp_tit, 
+			sol_tp_desc, 
+			sol_tp_tag, 
+			COALESCE(icon_url, '') AS icon_url, 
+			upd_dt
+    	FROM sol_tp_mgmt
+    	ORDER BY sol_tp_id
+    	OFFSET ${(page - 1) * limit}
+        LIMIT ${limit}
+    </select>
+
+	<select id="findSolutionTypeById" resultMap="solution_type_dto">
+		SELECT 
+			sol_tp_id, 
+			sol_tp_tit, 
+			sol_tp_desc, 
+			sol_tp_tag, 
+			COALESCE(icon_url, '') AS icon_url, 
+			upd_dt
+		FROM sol_tp_mgmt
+		WHERE sol_tp_id = #{id}
+	</select>
+	
+	<insert id="addSolutionType" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO sol_tp_mgmt (sol_tp_tit, sol_tp_desc, sol_tp_tag, icon_url, cre_usr_id, upd_usr_id)
+		VALUES (
+			#{title},
+			NULLIF(#{description}, ''),
+			NULLIF(#{tag}, ''),
+			#{iconUrl},
+			#{creUsrId},
+			#{updUsrId}
+		)
+	</insert>
+	
+	<update id="updateSolutionType">
+		UPDATE sol_tp_mgmt
+    	<trim prefix="SET" suffixOverrides=",">
+		    <if test="title != null and title != ''">
+		      sol_tp_tit = #{title},
+		    </if>
+		    <if test="description != null">
+		      sol_tp_desc = NULLIF(#{description}, ''),
+		    </if>
+		   <if test="tag != null">
+		      sol_tp_tag = NULLIF(#{tag}, ''),
+		    </if>
+		    <if test="updUsrId != null">
+		      upd_usr_id = #{updUsrId},
+		    </if>
+		    <if test="updDt != null">
+		      upd_dt = #{updDt},
+		    </if>
+        </trim>
+        WHERE sol_tp_id = #{id}
+	</update>
+	
+	<delete id="deleteSolutionType">
+		DELETE FROM sol_tp_mgmt
+		WHERE sol_tp_id = #{id}
+	</delete>
+	
+	<select id="findAllSolutionContentIdByType" resultType="java.lang.Long">
+		SELECT sol_ctnt_id
+		FROM sol_ctnt_mgmt
+		WHERE sol_tp_id = #{typeId}
+	</select>
+	
+	<select id="countAllSolutionContent" resultType="java.lang.Long">
+		SELECT COUNT(*)
+		FROM sol_ctnt_mgmt
+		WHERE sol_tp_id = #{typeId}
+	</select>
+	
+	<select id="findAllSolutionContent" resultMap="solution_content_dto">
+		SELECT 
+			sol_ctnt_id,
+			sol_ctnt_tit,
+			sol_ctnt_sub_tit,
+			sol_ctnt_tag,
+			COALESCE(icon_url, '') AS icon_url,
+			sol_tp_id
+		FROM sol_ctnt_mgmt
+		WHERE sol_tp_id = #{typeId}
+		ORDER BY sol_ctnt_id
+		OFFSET ${(page - 1) * limit}
+        LIMIT ${limit}
+	</select>
+	
+	<select id="findSolutionContentById" resultMap="solution_content_dto">
+		SELECT 
+			sol_ctnt_id,
+			sol_ctnt_tit,
+			sol_ctnt_sub_tit,
+			sol_ctnt_tag,
+			sol_ctnt_desc,
+			COALESCE(icon_url, '') AS icon_url,
+			sol_tp_id
+		FROM sol_ctnt_mgmt
+		WHERE sol_ctnt_id = #{id}
+	</select>
+	
+	<insert id="addSolutionContent" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO sol_ctnt_mgmt (
+			sol_tp_id, sol_ctnt_tit, sol_ctnt_sub_tit, 
+			sol_ctnt_tag, icon_url, cre_usr_id, upd_usr_id
+		)
+		VALUES (
+			#{typeId},
+			#{title},
+			#{subTitle},
+			NULLIF(#{tag}, ''),
+			#{iconUrl},
+			#{creUsrId},
+			#{updUsrId}
+		)
+	</insert>
+	
+	<update id="updateSolutionContent">
+		UPDATE sol_ctnt_mgmt
+    	<trim prefix="SET" suffixOverrides=",">
+		    <if test="title != null and title != ''">
+		      sol_ctnt_tit = #{title},
+		    </if>
+		    <if test="subTitle != null and subTitle != ''">
+		      sol_ctnt_sub_tit = #{subTitle},
+		    </if>
+		    <if test="description != null and description != ''">
+		      sol_ctnt_desc = #{description, typeHandler=egovframework.com.config.mybatis.ObjectTypeHandler}::jsonb,
+		    </if>
+		   <if test="tag != null">
+		      sol_ctnt_tag = NULLIF(#{tag}, ''),
+		    </if>
+		    <if test="updUsrId != null">
+		      upd_usr_id = #{updUsrId},
+		    </if>
+		    <if test="updDt != null">
+		      upd_dt = #{updDt},
+		    </if>
+        </trim>
+        WHERE sol_ctnt_id = #{id}
+	</update>
+	
+	<delete id="deleteSolutionContent">
+		DELETE FROM sol_ctnt_mgmt
+		WHERE sol_ctnt_id = #{id}
+	</delete>
+</mapper>

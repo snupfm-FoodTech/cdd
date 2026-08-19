@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ConsultReqDAO">
+
+	<resultMap id = "consult_request_dto" type="egovframework.let.consult_request.dto.ConsultReqDto">
+		<id property="id" column="id"/>
+        <result property="foodTech" column="food_tech" typeHandler="egovframework.com.cmm.type_handler.CommonCodeDtoTpHndlr"/>
+        <result property="companyName" column="company_name" />
+        <result property="companyBizNo" column="company_biz_no" />
+        <result property="companyAddress" column="company_address" typeHandler="egovframework.com.cmm.type_handler.CommonCodeDtoTpHndlr"/>
+        <result property="senderName" column="sender_name" />
+        <result property="senderPhoneNo" column="sender_phone_no" />
+        <result property="senderEmail" column="sender_email" />
+        <result property="solutionTypes" column="solution_types" typeHandler="egovframework.com.cmm.type_handler.CommonCodeDtoListTpHndlr"/>
+        <result property="solutionTargets" column="solution_targets" typeHandler="egovframework.com.cmm.type_handler.CommonCodeDtoListTpHndlr"/>
+        <result property="solutionTitle" column="solution_title" />
+        <result property="solutionDetail" column="solution_detail" />
+        <result property="creDt" column="cre_dt" />
+    </resultMap>
+	
+	<insert id="addConsultReq" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO csul_req_mgmt (fd_tec_id, co_nm, co_biz_no, co_addr_id, sndr_nm, sndr_phn_no,
+		sndr_eml, sol_tp_ids, sol_tgt_ids, sol_title, sol_dtl, cre_usr_id, upd_usr_id)
+		VALUES (
+			#{foodTechId},
+			#{companyName},
+			#{companyBizNo},
+			#{companyAddressId},
+			#{senderName},
+			#{senderPhoneNo},
+			#{senderEmail},
+			#{solutionTypeIds, jdbcType=ARRAY, javaType=java.util.List, typeHandler=egovframework.com.config.mybatis.JdbcArrayAndJavaListTypeHandler},
+			#{solutionTargetIds, jdbcType=ARRAY, javaType=java.util.List, typeHandler=egovframework.com.config.mybatis.JdbcArrayAndJavaListTypeHandler},
+			#{solutionTitle},
+			#{solutionDetail},
+			0,
+			0
+		)
+	</insert>
+	
+	<select id="countAllConsultReq" resultType="java.lang.Long">
+		SELECT count(*)
+		FROM csul_req_mgmt
+	</select>
+	
+	<select id="findAllConsultReq" resultMap="consult_request_dto">
+		SELECT
+			req.id,
+			(
+				SELECT
+					jsonb_build_object(
+						'code',
+						intg_cd_val_ctnt,
+						'content',
+						intg_cd_dp_val_desc,
+						'description',
+						intg_cd_val_desc,
+						'seq',
+						intg_cd_val_seq
+					)
+				FROM
+					com_intg_cd_dtl
+				WHERE
+					intg_cd = 'CD00016'
+					AND intg_cd_val_ctnt = req.fd_tec_id
+			) AS food_tech,
+			req.co_nm AS company_name,
+			req.co_biz_no AS company_biz_no,
+			(
+				SELECT
+					jsonb_build_object(
+						'code',
+						intg_cd_val_ctnt,
+						'content',
+						intg_cd_dp_val_desc,
+						'description',
+						intg_cd_val_desc,
+						'seq',
+						intg_cd_val_seq
+					)
+				FROM
+					com_intg_cd_dtl
+				WHERE
+					intg_cd = 'CD00017'
+					AND intg_cd_val_ctnt = req.co_addr_id
+			) AS company_address,
+			req.sndr_nm AS sender_name,
+			req.sndr_phn_no AS sender_phone_no,
+			req.sndr_eml AS sender_email,
+			(
+				SELECT
+					jsonb_agg(
+						jsonb_build_object(
+							'code',
+							intg_cd_val_ctnt,
+							'content',
+							intg_cd_dp_val_desc,
+							'description',
+							intg_cd_val_desc,
+							'seq',
+							intg_cd_val_seq
+						)
+					)
+				FROM
+					com_intg_cd_dtl
+				WHERE
+					intg_cd = 'CD00018'
+					AND intg_cd_val_ctnt = ANY(req.sol_tp_ids)
+			) AS solution_types,
+			(
+				SELECT
+					jsonb_agg(
+						jsonb_build_object(
+							'code',
+							intg_cd_val_ctnt,
+							'content',
+							intg_cd_dp_val_desc,
+							'description',
+							intg_cd_val_desc,
+							'seq',
+							intg_cd_val_seq
+						)
+					)
+				FROM
+					com_intg_cd_dtl
+				WHERE
+					intg_cd = 'CD00019'
+					AND intg_cd_val_ctnt = ANY(req.sol_tgt_ids)
+			) AS solution_targets,
+			req.sol_title AS solution_title,
+			req.sol_dtl AS solution_detail,
+			req.cre_dt
+		FROM
+			csul_req_mgmt req
+		OFFSET ${(page - 1) * limit}
+        LIMIT ${limit}
+	</select>
+	
+	<select id="findConsulReqById" resultMap="consult_request_dto">
+		SELECT
+			req.id,
+			(
+				SELECT
+					jsonb_build_object(
+						'code',
+						intg_cd_val_ctnt,
+						'content',
+						intg_cd_dp_val_desc,
+						'description',
+						intg_cd_val_desc,
+						'seq',
+						intg_cd_val_seq
+					)
+				FROM
+					com_intg_cd_dtl
+				WHERE
+					intg_cd = 'CD00016'
+					AND intg_cd_val_ctnt = req.fd_tec_id
+			) AS food_tech,
+			req.co_nm AS company_name,
+			req.co_biz_no AS company_biz_no,
+			(
+				SELECT
+					jsonb_build_object(
+						'code',
+						intg_cd_val_ctnt,
+						'content',
+						intg_cd_dp_val_desc,
+						'description',
+						intg_cd_val_desc,
+						'seq',
+						intg_cd_val_seq
+					)
+				FROM
+					com_intg_cd_dtl
+				WHERE
+					intg_cd = 'CD00017'
+					AND intg_cd_val_ctnt = req.co_addr_id
+			) AS company_address,
+			req.sndr_nm AS sender_name,
+			req.sndr_phn_no AS sender_phone_no,
+			req.sndr_eml AS sender_email,
+			(
+				SELECT
+					jsonb_agg(
+						jsonb_build_object(
+							'code',
+							intg_cd_val_ctnt,
+							'content',
+							intg_cd_dp_val_desc,
+							'description',
+							intg_cd_val_desc,
+							'seq',
+							intg_cd_val_seq
+						)
+					)
+				FROM
+					com_intg_cd_dtl
+				WHERE
+					intg_cd = 'CD00018'
+					AND intg_cd_val_ctnt = ANY(req.sol_tp_ids)
+			) AS solution_types,
+			(
+				SELECT
+					jsonb_agg(
+						jsonb_build_object(
+							'code',
+							intg_cd_val_ctnt,
+							'content',
+							intg_cd_dp_val_desc,
+							'description',
+							intg_cd_val_desc,
+							'seq',
+							intg_cd_val_seq
+						)
+					)
+				FROM
+					com_intg_cd_dtl
+				WHERE
+					intg_cd = 'CD00019'
+					AND intg_cd_val_ctnt = ANY(req.sol_tgt_ids)
+			) AS solution_targets,
+			req.sol_title AS solution_title,
+			req.sol_dtl AS solution_detail,
+			req.cre_dt
+		FROM
+			csul_req_mgmt req
+		WHERE
+			req.id = #{id}
+	</select>
+</mapper>

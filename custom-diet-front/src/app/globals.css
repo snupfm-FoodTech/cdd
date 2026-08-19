@@ -1,0 +1,282 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.rdp-vhidden {
+  @apply hidden;
+}
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;                    /* Light background (from #F9FAFB) */
+    --foreground: 0 0% 20%;                       /* Primary text color (from #333333) */
+
+    --card: 0 0% 100%;                            /* White card background */
+    --card-foreground: 0 0% 20%;                  /* Text inside card – dark gray */
+
+    --popover: 0 0% 100%;                         /* White popover */
+    --popover-foreground: 0 0% 20%;               /* Text inside popovers */
+
+    --primary: 212 79% 43%;                      /* Main blue (#0072CE) */
+    --primary-foreground: 0 0% 100%;              /* White text on primary */
+
+    --secondary: 220 20% 92%;                   /* Softer light gray */
+    --secondary-foreground: 220 15% 30%;        /* Darker gray for readable text */
+    
+    --accent: 190 80% 50%;                          /* Teal color */
+    --accent-foreground: 0 0% 100%;               /* White text on accent */
+
+    --muted: 210 20% 94%;                         /* Subtle muted background */
+    --muted-foreground: 0 0% 45%;                 /* Dimmed text color */
+
+    --destructive: 2 75% 58%;                     /* Same as accent red for destructive actions */
+    --destructive-foreground: 0 0% 100%;          /* White on red */
+
+    --border: 210 20% 90%;                        /* Light gray border for cards/inputs */
+    --input: 210 20% 90%;                         /* Input border background */
+    --ring: 210 100% 45%;                         /* Blue ring for focus */
+
+    --radius: 0.5rem;                             /* Base radius for rounded corners */
+  }
+
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+  }
+}
+
+@layer base {
+  /* SECTION ANIMATION */
+  .section-frequently-item {
+  @apply transition-all duration-300 ease-in-out;
+}
+
+.section-frequently-item:hover {
+  @apply border-2 border-accent bg-accent;
+}
+
+.section-frequently-item:hover > .text {
+  @apply text-white font-bold transition-all duration-300 ease-in-out;
+}
+
+.section-frequently-item:hover > .icon {
+  @apply bg-white transition-all duration-300 ease-in-out;
+}
+
+  .section-padding {
+    @apply px-4 sm:px-6 lg:px-12;
+  }
+
+  .section-padding-sidebar {
+    @apply px-4;
+  }
+
+  .section-padding-y {
+    @apply mb-10 mt-5;
+  }
+  
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+/* TRUNCATE TEXT */
+.truncate-text-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
+.truncate-text-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
+.truncate-text-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
+.truncate-text-4 {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
+.truncate-text-5 {
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
+.truncate-text-6 {
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
+/* TRUNCATE TEXT */
+
+
+/* HOLE CARD */
+
+.hole-card-1 {
+  position: relative;
+  z-index: 4;
+}
+
+.hole-card-1::before {
+  display: block;
+  content: '';
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background-color: rgb(34 197 94);
+  position: absolute;
+  right: -48px;
+  bottom: 42px;
+  z-index: 2;
+}
+
+.hole-card-2 {
+  position: relative;
+}
+
+.hole-card-2::before {
+  display: block;
+  content: '';
+  width: 125px;
+  height: 125px;
+  border-radius: 50%;
+  background-color: #F5F5F5;
+  position: absolute;
+  left: -72px;
+  bottom: 28px;
+  z-index: 2;
+}
+
+.hole-card-2::after {
+  display: block;
+  content: '';
+  width: 125px;
+  height: 125px;
+  border-radius: 50%;
+  background-color: #F5F5F5;
+  position: absolute;
+  right: -72px;
+  top: 28px;
+  z-index: 2;
+}
+
+.hole-card-3 {
+  position: relative;
+  z-index: 4;
+}
+
+.hole-card-3::before {
+  display: block;
+  content: '';
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background-color: rgb(249 115 22);
+  position: absolute;
+  left: -48px;
+  top: 42px;
+  z-index: 2;
+}
+
+.hole-card-4 {
+  position: relative;
+  z-index: 1;
+}
+
+.hole-card-4::before {
+  display: block;
+  content: '';
+  width: 7rem;
+  height: 7rem;
+  border-radius: 50%;
+  background-color: #F3F4F6;
+  position: absolute;
+  right: -68px;
+  top: 63px;
+  z-index: 2;
+}
+
+.hole-card-5 {
+  position: relative;
+  z-index: 1;
+  margin-left: 20px;
+  padding-left: 80px;
+}
+
+.hole-card-5::before {
+  display: block;
+  content: '';
+  width: 7rem;
+  height: 7rem;
+  border-radius: 50%;
+  background-color: #F3F4F6;
+  position: absolute;
+  left: -68px;
+  top: 63px;
+  z-index: 2;
+}
+
+/* HOLE CARD */
+
+.wrap-anywhere {
+  overflow-wrap: anywhere;
+}
+
+
+/* SECTION ANIMATION */

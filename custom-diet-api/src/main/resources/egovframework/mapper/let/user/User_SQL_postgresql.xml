@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="UserDAO">
+
+	<resultMap id = "user_mapper" type="egovframework.let.user.entity.UserEntity">
+    	<result property="usrId" column="usr_id"/>
+        <result property="usrEml" column="usr_eml"/>
+        <result property="usrPwd" column="usr_pwd"/>
+        <result property="usrNm" column="usr_nm"/>
+        <result property="usrPhnNo" column="usr_phn_no"/>
+        <result property="usrLstLoginDt" column="usr_lst_log_dt"/>
+        <result property="usrAcctSttCd" column="usr_acct_sts_cd"/>
+        <result property="usrRoles" column="usr_roles"/>
+        <result property="ttlNo" column="ttl_no"/>
+		<result property="creUsrId" column="cre_usr_id"/>
+		<result property="creDt" column="cre_dt"/>
+		<result property="updUsrId" column="upd_usr_id"/>
+		<result property="updDt" column="upd_dt"/>
+		<result property="no" column="no"/>
+    </resultMap>
+
+    <select id="findAllUsers" resultMap="user_mapper">
+        SELECT a.usr_id, a.usr_eml, a.usr_pwd, a.usr_nm, a.usr_phn_no, a.usr_lst_log_dt, a.usr_acct_sts_cd, a.cre_usr_id, a.cre_dt, a.upd_usr_id, a.upd_dt,
+			STRING_AGG(c.role_cd, ',' ORDER BY c.role_cd) AS usr_roles, 
+			count(*) over() AS ttl_no,
+			count(*) over() + 1 - ROW_NUMBER() over(
+	        	<choose>
+		        	<when test="orderByField != null and orderByField != ''">
+		        		ORDER BY a.${orderByField} <if test="isDesc">DESC</if>
+		        	</when>
+		        	<otherwise>
+		        		ORDER BY a.cre_dt DESC, a.usr_id
+		        	</otherwise>
+		        </choose>
+	        ) as no
+		FROM usr_mgmt a
+		LEFT JOIN usr_role_mgmt b ON a.usr_id = b.usr_id 
+		LEFT JOIN role_mgmt c ON b.role_id = c.role_id 
+		WHERE a.usr_acct_sts_cd = 'A'
+		AND (
+			c.role_cd != 'ADM'
+			OR c.role_cd IS NULL
+		)
+		<if test="usrNm != null and usrNm != ''">
+		<bind name="usrNm" value="'%' + usrNm.toUpperCase() + '%'" />
+		AND UPPER(a.usr_nm) LIKE #{usrNm}
+		</if>
+		<if test="usrEml != null and usrEml != ''">
+		<bind name="usrEml" value="'%' + usrEml.toUpperCase() + '%'" />
+		AND UPPER(a.usr_eml) LIKE #{usrEml}
+		</if>
+		GROUP BY a.usr_id, a.usr_eml, a.usr_pwd, a.usr_nm, a.usr_phn_no, a.usr_lst_log_dt, a.usr_acct_sts_cd, a.cre_usr_id, a.cre_dt, a.upd_usr_id, a.upd_dt 
+        <choose>
+        	<when test="orderByField != null and orderByField != ''">
+        		ORDER BY a.${orderByField} <if test="isDesc">DESC</if>
+        	</when>
+        	<otherwise>
+        		ORDER BY a.cre_dt DESC, a.usr_id
+        	</otherwise>
+        </choose>
+        <if test="offset != null">
+        OFFSET ${offset}
+        </if>
+        <if test="limit != null">
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <select id="findUserById" resultMap="user_mapper">
+        SELECT a.usr_id, a.usr_eml, a.usr_pwd, a.usr_nm, a.usr_phn_no, a.usr_lst_log_dt, a.usr_acct_sts_cd, a.cre_usr_id, a.cre_dt, a.upd_usr_id, a.upd_dt,
+			STRING_AGG(c.role_cd, ',' ORDER BY c.role_cd) AS usr_roles,
+			1 as no
+		FROM usr_mgmt a
+		LEFT JOIN usr_role_mgmt b ON a.usr_id = b.usr_id 
+		LEFT JOIN role_mgmt c ON b.role_id = c.role_id 
+		WHERE a.usr_id = #{id} 
+		AND a.usr_acct_sts_cd = 'A'
+		GROUP BY a.usr_id, a.usr_eml, a.usr_pwd, a.usr_nm, a.usr_phn_no, a.usr_lst_log_dt, a.usr_acct_sts_cd, a.cre_usr_id, a.cre_dt, a.upd_usr_id, a.upd_dt 
+    </select>
+    
+    <select id="findUserByEmail" resultMap="user_mapper">
+	    SELECT a.usr_id, a.usr_eml, a.usr_pwd, a.usr_nm, a.usr_phn_no, a.usr_lst_log_dt, a.usr_acct_sts_cd, a.cre_usr_id, a.cre_dt, a.upd_usr_id, a.upd_dt,
+			STRING_AGG(c.role_cd, ',' ORDER BY c.role_cd) AS usr_roles,
+			1 as no
+		FROM usr_mgmt a
+		LEFT JOIN usr_role_mgmt b ON a.usr_id = b.usr_id 
+		LEFT JOIN role_mgmt c ON b.role_id = c.role_id 
+		WHERE a.usr_eml = #{email} 
+		AND a.usr_acct_sts_cd = 'A'
+		GROUP BY a.usr_id, a.usr_eml, a.usr_pwd, a.usr_nm, a.usr_phn_no, a.usr_lst_log_dt, a.usr_acct_sts_cd, a.cre_usr_id, a.cre_dt, a.upd_usr_id, a.upd_dt 
+    </select>
+
+    <insert id="insertUser" useGeneratedKeys="true" keyProperty="usrId">
+        INSERT INTO usr_mgmt(usr_eml, usr_pwd, usr_nm, usr_phn_no, usr_acct_sts_cd, cre_usr_id, cre_dt, upd_usr_id, upd_dt)
+        VALUES(#{usrEml}, #{usrPwd}, #{usrNm}, #{usrPhnNo}, #{usrAcctSttCd}, 
+        <choose>
+            <when test="creUsrId != null">
+                #{creUsrId}
+            </when>
+            <otherwise>
+                (SELECT currval('usr_mgmt_usr_id_seq'))
+            </otherwise>
+        </choose>,
+        #{creDt},
+        <choose>
+            <when test="updUsrId != null">
+                #{updUsrId}
+            </when>
+            <otherwise>
+                (SELECT currval('usr_mgmt_usr_id_seq'))
+            </otherwise>
+        </choose>,
+        #{updDt})
+    </insert>
+
+    <update id="updateUser">
+        UPDATE usr_mgmt
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="usrEml != null and usrEml != ''">
+                usr_eml = #{usrEml},
+            </if>
+            <if test="usrPwd != null and usrPwd != ''">
+                usr_pwd = #{usrPwd},
+            </if>
+            <if test="usrNm != null and usrNm != ''">
+                usr_nm = #{usrNm},
+            </if>
+            <if test="usrPhnNo != null">
+                usr_phn_no = #{usrPhnNo},
+            </if>
+            <if test="usrLstLoginDt != null">
+                usr_lst_log_dt = #{usrLstLoginDt},
+            </if>
+            <if test="usrAcctSttCd != null and usrAcctSttCd != ''">
+                usr_acct_sts_cd = #{usrAcctSttCd},
+            </if>
+            <if test="updUsrId != null">
+                upd_usr_id = #{updUsrId},
+            </if>
+            <if test="updDt != null">
+                upd_dt = #{updDt},
+            </if>
+        </trim>
+        WHERE usr_id = #{usrId}
+    </update>
+    
+    <update id="updateUserLstLoginDt">
+    	UPDATE usr_mgmt
+        SET usr_lst_log_dt = #{usrLstLoginDt}
+        WHERE usr_id = #{usrId}
+    </update>
+
+    <update id="deleteUserById">
+        UPDATE usr_mgmt
+        SET usr_acct_sts_cd = 'D'
+        WHERE usr_id = #{usrId}
+    </update>
+
+	<select id="checkUserPermission" resultType="java.lang.Integer">
+		SELECT 1
+		FROM usr_mgmt a
+		INNER JOIN usr_role_mgmt b ON (a.usr_id = b.usr_id)
+		INNER JOIN role_mgmt c ON (b.role_id = c.role_id)
+		INNER JOIN role_perm_mgmt d ON (c.role_id = d.role_id)
+		INNER JOIN perm_mgmt e ON (d.perm_id = e.perm_id)
+		WHERE a.usr_id = #{id}
+		AND a.usr_acct_sts_cd = 'A'
+		AND e.perm_rsrc = #{resource}
+		AND e.perm_act = #{action}
+		LIMIT 1
+	</select>
+	
+	<insert id="addRolesToUser" parameterType="java.util.List">
+		INSERT INTO usr_role_mgmt (usr_id, role_id, cre_usr_id, cre_dt, upd_usr_id, upd_dt)
+		VALUES
+		<foreach collection="list" item="element" separator=",">
+            (#{element.usrId}, 
+            #{element.roleId}, 
+            #{element.creUsrId}, 
+            #{element.creDt}, 
+            #{element.updUsrId}, 
+            #{element.updDt})
+        </foreach>
+	</insert>
+	
+	<update id="changePassword">
+		UPDATE usr_mgmt
+        SET 
+        	usr_pwd = #{usrPwd},
+        	upd_usr_id = #{updUsrId},
+        	upd_dt = #{updDt}
+        WHERE usr_id = #{usrId}
+	</update>
+</mapper>

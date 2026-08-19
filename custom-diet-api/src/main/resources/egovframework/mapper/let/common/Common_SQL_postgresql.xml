@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="CommonDAO">
+
+ 	<resultMap id="common_code_mapper" type="egovframework.com.cmm.dto.CommonCodeDto">
+		<result property="code" column="code"/>
+		<result property="content" column="content"/>
+		<result property="description" column="description"/>
+		<result property="seq" column="seq"/>
+    </resultMap>
+    
+    <select id="findCodeDetail" resultMap="common_code_mapper">
+   		SELECT 
+			intg_cd_val_ctnt AS code, 
+			intg_cd_dp_val_desc AS content,
+			intg_cd_val_desc AS description,
+			intg_cd_val_seq AS seq
+		FROM com_intg_cd_dtl
+		WHERE 1 = 1
+		<if test="intgCd != null and intgCd != ''">
+        AND intg_cd = #{intgCd}
+        </if>
+        <if test="codeId != null and codeId != ''">
+        AND intg_cd_val_ctnt = #{codeId}
+        </if>
+   </select>
+</mapper>

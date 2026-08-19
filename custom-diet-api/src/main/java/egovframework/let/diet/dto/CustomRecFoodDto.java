@@ -1,0 +1,17 @@
+package egovframework.let.diet.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class CustomRecFoodDto {
+	
+	private String alias;
+	
+	private String typeCode;
+}

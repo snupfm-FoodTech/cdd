@@ -1,0 +1,26 @@
+# 루트 공유 환경 파일 (시크릿 포함, .example 만 추적)
+.env
+!.env.example
+
+# OMC tooling
+.omc/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+
+# deploy/ — 시크릿 및 runtime 파일은 추적하지 않음 (.example만 추적)
+deploy/application.properties
+deploy/front.env
+deploy/ssl/*
+!deploy/ssl/.gitkeep
+deploy/log/*
+!deploy/log/.gitkeep

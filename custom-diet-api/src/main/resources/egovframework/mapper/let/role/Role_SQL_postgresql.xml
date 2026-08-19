@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="RoleDAO">
+	
+	<resultMap id = "role_mapper" type="egovframework.let.role.RoleEntity">
+    	<result property="roleId" column="role_id"/>
+        <result property="roleCd" column="role_cd"/>
+        <result property="roleDesc" column="role_desc"/>
+    </resultMap>
+
+    <select id="findRoleByCode" resultMap="role_mapper">
+        SELECT *
+        FROM role_mgmt
+        WHERE role_cd = #{code}
+    </select>
+    
+    <select id="findAllRoleByUserId" resultMap="role_mapper">
+        SELECT *
+        FROM role_mgmt a 
+        INNER JOIN usr_role_mgmt b ON a.role_id = b.role_id
+        WHERE b.usr_id = #{usrId}
+    </select>
+    
+ 
+</mapper>
