@@ -1489,14 +1489,17 @@ public class EgovDietServiceImpl extends EgovAbstractServiceImpl implements Egov
     /** nutr_foml 파싱 결과를 담는 구조화된 제약 객체. 빌드 단계에서 1회 파싱 후 재사용. */
     private static class FormulaConstraint {
         enum Type { UPPER, LOWER, RANGE }
+        /** 기준이 무엇 대비 비율/양인지: 총 열량 대비 %(CALORIE_PCT), 100kcal당 절대량(CALORIE_PER100), 레시피 100g당 절대량(WEIGHT_PER100) */
+        enum Basis { CALORIE_PCT, CALORIE_PER100, WEIGHT_PER100 }
         final Type type;
-        final double pct1;    // 단일 비율 또는 범위 하한 비율 (0.0~1.0)
-        final double pct2;    // 범위 상한 비율 (RANGE 전용)
+        final Basis basis;
+        final double pct1;    // CALORIE_PCT: 비율(0.0~1.0) / PER100 계열: 100단위당 절대량
+        final double pct2;    // 범위 상한 비율 (RANGE 전용, CALORIE_PCT만 해당)
         final boolean strict; // true=미만(<), false=이하(<=)
-        final double divisor; // 9 kcal/g(SFA/FAT) or 4 kcal/g(그 외)
+        final double divisor; // CALORIE_PCT 전용: 9 kcal/g(SFA/FAT) or 4 kcal/g(그 외)
 
-        FormulaConstraint(Type type, double pct1, double pct2, boolean strict, double divisor) {
-            this.type = type; this.pct1 = pct1; this.pct2 = pct2;
+        FormulaConstraint(Type type, Basis basis, double pct1, double pct2, boolean strict, double divisor) {
+            this.type = type; this.basis = basis; this.pct1 = pct1; this.pct2 = pct2;
             this.strict = strict; this.divisor = divisor;
         }
     }
@@ -1509,11 +1512,13 @@ public class EgovDietServiceImpl extends EgovAbstractServiceImpl implements Egov
         final double slotCapaVol;
         final boolean hasEmptySlots;
         final Map<String, FormulaConstraint> formulaConstraintMap;
+        final double currentTotalWgt; // 현재 트레이에 담긴 음식들의 총 중량(g) 합계. WEIGHT_PER100 기준(예: 저당/저염) 계산에 사용.
 
         NutrientBudgetContext(Map<String, Double> weightFromMap, Map<String, Double> weightToMap,
                               Set<String> compareNutrCds, Map<String, Double> currentTotalMap,
                               double slotCapaVol, boolean hasEmptySlots,
-                              Map<String, FormulaConstraint> formulaConstraintMap) {
+                              Map<String, FormulaConstraint> formulaConstraintMap,
+                              double currentTotalWgt) {
             this.weightFromMap = weightFromMap;
             this.weightToMap = weightToMap;
             this.compareNutrCds = compareNutrCds;
@@ -1521,6 +1526,7 @@ public class EgovDietServiceImpl extends EgovAbstractServiceImpl implements Egov
             this.slotCapaVol = slotCapaVol;
             this.hasEmptySlots = hasEmptySlots;
             this.formulaConstraintMap = formulaConstraintMap;
+            this.currentTotalWgt = currentTotalWgt;
         }
     }
 
@@ -1629,6 +1635,7 @@ public class EgovDietServiceImpl extends EgovAbstractServiceImpl implements Egov
 
         // 3. 활성 음식 영양합산 (fd_capa_vol 배수 적용)
         Map<String, Double> currentTotalMap = new HashMap<>();
+        double currentTotalWgt = 0.0;
         if (!activeTrayFoods.isEmpty()) {
             List<String> activeFdCds = activeTrayFoods.stream()
                     .map(f -> f.get("fdCd") != null ? f.get("fdCd").toString() : null)
@@ -1655,6 +1662,7 @@ public class EgovDietServiceImpl extends EgovAbstractServiceImpl implements Egov
                 Object ttlCalcWgtObj = nutrRow.get("ttlCalcWgt");
                 double ttlCalcWgt = ttlCalcWgtObj != null ? ((Number) ttlCalcWgtObj).doubleValue() : 0.0;
                 double scalingRatio = ttlCalcWgt > 0 ? capaVol / ttlCalcWgt : 1.0;
+                currentTotalWgt += capaVol;
                 for (String nutrCd : compareNutrCds) {
                     Object val = nutrRow.get(nutrCd.toLowerCase(Locale.ROOT));
                     if (val != null) {
@@ -1668,7 +1676,7 @@ public class EgovDietServiceImpl extends EgovAbstractServiceImpl implements Egov
         int emptySlotCount = dietDAO.findEmptySlotCount(dietId);
         boolean hasEmptySlots = emptySlotCount > 0;
 
-        return new NutrientBudgetContext(weightFromMap, weightToMap, compareNutrCds, currentTotalMap, slotCapaVol, hasEmptySlots, formulaConstraintMap);
+        return new NutrientBudgetContext(weightFromMap, weightToMap, compareNutrCds, currentTotalMap, slotCapaVol, hasEmptySlots, formulaConstraintMap, currentTotalWgt);
     }
 
     /**
@@ -1696,21 +1704,24 @@ public class EgovDietServiceImpl extends EgovAbstractServiceImpl implements Egov
             String candidateFdCd = candidate.getCode();
             Map<String, Object> nutrRow = nutrByFdCd.get(candidateFdCd);
             // 후보 스케일링: slotCapaVol(교체 대상 슬롯 용량) / 후보 자신의 ttlCalcWgt
-            double candidateScalingRatio = 1.0;
-            if (nutrRow != null && ctx.slotCapaVol > 0) {
+            double ttlCalcWgt = 0.0;
+            if (nutrRow != null) {
                 Object ttlCalcWgtObj = nutrRow.get("ttlCalcWgt");
-                double ttlCalcWgt = ttlCalcWgtObj != null ? ((Number) ttlCalcWgtObj).doubleValue() : 0.0;
-                if (ttlCalcWgt > 0) {
-                    candidateScalingRatio = ctx.slotCapaVol / ttlCalcWgt;
-                }
+                ttlCalcWgt = ttlCalcWgtObj != null ? ((Number) ttlCalcWgtObj).doubleValue() : 0.0;
             }
-            // 공식 기반 제약을 위한 projected ENG 계산
+            double candidateScalingRatio = 1.0;
+            if (ctx.slotCapaVol > 0 && ttlCalcWgt > 0) {
+                candidateScalingRatio = ctx.slotCapaVol / ttlCalcWgt;
+            }
+            // 공식 기반 제약을 위한 projected ENG/중량 계산
             double candidateEng = 0.0;
             if (nutrRow != null) {
                 Object engVal = nutrRow.get("eng");
                 if (engVal != null) candidateEng = ((Number) engVal).doubleValue() * candidateScalingRatio;
             }
             double projectedEng = ctx.currentTotalMap.getOrDefault("ENG", 0.0) + candidateEng;
+            double candidateWgt = ttlCalcWgt * candidateScalingRatio;
+            double projectedWgt = ctx.currentTotalWgt + candidateWgt;
             boolean ok = true;
             for (String nutrCd : ctx.compareNutrCds) {
                 double currentTotal = ctx.currentTotalMap.getOrDefault(nutrCd, 0.0);
@@ -1723,7 +1734,7 @@ public class EgovDietServiceImpl extends EgovAbstractServiceImpl implements Egov
                 FormulaConstraint fc = ctx.formulaConstraintMap.get(nutrCd);
                 if (fc != null) {
                     // nutr_foml 기반 동적 제약 체크 (빌드 단계에서 파싱된 구조 사용)
-                    if (!checkFormulaConstraint(fc, projectedTotal, projectedEng, ctx.hasEmptySlots)) {
+                    if (!checkFormulaConstraint(fc, projectedTotal, projectedEng, projectedWgt, ctx.hasEmptySlots)) {
                         ok = false; break;
                     }
                 } else {
@@ -1750,6 +1761,12 @@ public class EgovDietServiceImpl extends EgovAbstractServiceImpl implements Egov
     private static final java.util.regex.Pattern FORMULA_UPPER = java.util.regex.Pattern.compile("총 열량의 (\\d+)% (미만|이하)");
     private static final java.util.regex.Pattern FORMULA_RANGE = java.util.regex.Pattern.compile("총 열량의 (\\d+)~(\\d+)%");
     private static final java.util.regex.Pattern FORMULA_LOWER = java.util.regex.Pattern.compile("총 열량의 (\\d+)% 이상");
+    // "100g당 5g 미만"(저당), "100g당 120mg 미만"(저염) 처럼 레시피 총중량 100g당 절대량으로 표현된 기준
+    private static final java.util.regex.Pattern FORMULA_PER_100G =
+            java.util.regex.Pattern.compile("100\\s*g\\s*당\\s*(\\d+(?:\\.\\d+)?)\\s*(?:g|mg)\\s*(미만|이하|이상)");
+    // "100kcal 당 5g 이상"(고단백) 처럼 총열량 100kcal당 절대량으로 표현된 기준
+    private static final java.util.regex.Pattern FORMULA_PER_100KCAL =
+            java.util.regex.Pattern.compile("100\\s*kcal\\s*당\\s*(\\d+(?:\\.\\d+)?)\\s*(?:g|mg)\\s*(미만|이하|이상)");
 
     /** nutr_foml 문자열을 빌드 단계에서 1회 파싱하여 FormulaConstraint로 반환. */
     private static FormulaConstraint parseFormulaConstraint(String nutrCd, String formula) {
@@ -1758,32 +1775,58 @@ public class EgovDietServiceImpl extends EgovAbstractServiceImpl implements Egov
 
         m = FORMULA_UPPER.matcher(formula);
         if (m.find()) {
-            return new FormulaConstraint(FormulaConstraint.Type.UPPER,
+            return new FormulaConstraint(FormulaConstraint.Type.UPPER, FormulaConstraint.Basis.CALORIE_PCT,
                     Double.parseDouble(m.group(1)) / 100.0, 0, "미만".equals(m.group(2)), divisor);
         }
         m = FORMULA_RANGE.matcher(formula);
         if (m.find()) {
-            return new FormulaConstraint(FormulaConstraint.Type.RANGE,
+            return new FormulaConstraint(FormulaConstraint.Type.RANGE, FormulaConstraint.Basis.CALORIE_PCT,
                     Double.parseDouble(m.group(1)) / 100.0, Double.parseDouble(m.group(2)) / 100.0, false, divisor);
         }
         m = FORMULA_LOWER.matcher(formula);
         if (m.find()) {
-            return new FormulaConstraint(FormulaConstraint.Type.LOWER,
+            return new FormulaConstraint(FormulaConstraint.Type.LOWER, FormulaConstraint.Basis.CALORIE_PCT,
                     Double.parseDouble(m.group(1)) / 100.0, 0, false, divisor);
+        }
+        m = FORMULA_PER_100G.matcher(formula);
+        if (m.find()) {
+            boolean isLower = "이상".equals(m.group(2));
+            return new FormulaConstraint(isLower ? FormulaConstraint.Type.LOWER : FormulaConstraint.Type.UPPER,
+                    FormulaConstraint.Basis.WEIGHT_PER100,
+                    Double.parseDouble(m.group(1)), 0, "미만".equals(m.group(2)), 1.0);
+        }
+        m = FORMULA_PER_100KCAL.matcher(formula);
+        if (m.find()) {
+            boolean isLower = "이상".equals(m.group(2));
+            return new FormulaConstraint(isLower ? FormulaConstraint.Type.LOWER : FormulaConstraint.Type.UPPER,
+                    FormulaConstraint.Basis.CALORIE_PER100,
+                    Double.parseDouble(m.group(1)), 0, "미만".equals(m.group(2)), 1.0);
         }
         return null; // 알 수 없는 공식
     }
 
+    /** basis에 따라 기준선(경계값)을 계산. CALORIE_PCT는 열량*비율/divisor, PER100 계열은 100단위당 절대량 비례. */
+    private static double computeFormulaBound(FormulaConstraint fc, double projectedEng, double projectedWgt, double pct) {
+        switch (fc.basis) {
+            case WEIGHT_PER100:
+                return projectedWgt * pct / 100.0;
+            case CALORIE_PER100:
+                return projectedEng * pct / 100.0;
+            default:
+                return projectedEng * pct / fc.divisor;
+        }
+    }
+
     /** 파싱된 FormulaConstraint로 제약을 검사. 미만(<) vs 이하(<=) 구분 적용. */
     private boolean checkFormulaConstraint(FormulaConstraint fc, double projectedTotal,
-                                           double projectedEng, boolean hasEmptySlots) {
+                                           double projectedEng, double projectedWgt, boolean hasEmptySlots) {
         switch (fc.type) {
             case UPPER:
-                double upperBound = projectedEng * fc.pct1 / fc.divisor;
+                double upperBound = computeFormulaBound(fc, projectedEng, projectedWgt, fc.pct1);
                 return fc.strict ? projectedTotal < upperBound : projectedTotal <= upperBound;
             case LOWER:
                 if (hasEmptySlots) return true;
-                return projectedTotal >= projectedEng * fc.pct1 / fc.divisor;
+                return projectedTotal >= computeFormulaBound(fc, projectedEng, projectedWgt, fc.pct1);
             case RANGE:
                 double lb = projectedEng * fc.pct1 / fc.divisor;
                 double ub = projectedEng * fc.pct2 / fc.divisor;

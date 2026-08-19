@@ -52,7 +52,7 @@ VALUES
 ('SD00000004', 'SUGAR', 'N', null, null, '100g당 5g 미만'),
 ('SD00000005', 'NA', 'N', null, null, '100g당 120mg 미만'),
 -- ('SD00000006', 'ENG', 'Y', null, null, '100g당 40 kcal 미만'),
-('SD00000007', 'PROTEIN', 'N', null, null, '100kcal 당 5.5g 이상'),
+('SD00000007', 'PROTEIN', 'N', null, null, '100kcal 당 5g 이상'),
 
 ('SD00000008', 'ENG', 'Y', 500, 800, null),
 ('SD00000008', 'PROTEIN', 'N', null, null, '총 열량의 10% 이하'),

@@ -669,6 +669,9 @@ const DietModal = ({
     const template = TRAY_TEMPLATES.A;
 
     const updated = items.map((item) => {
+      // 이미 특정 음식이 선택된 슬롯(item.code 존재)은 그 음식의 실제 용량을 유지한다.
+      // 슬롯 기본값(TRAY_TEMPLATES)은 빈 슬롯에만 적용한다.
+      if (item.code) return item;
       const match = template.find((t) => t.typeCode === item.typeCode);
       return match ? { ...item, capacityVolume: match.capacityVolume } : item;
     });
@@ -683,9 +686,9 @@ const DietModal = ({
 
     if (!soupTemplate) return separates;
 
-    // Update soup item(s) to match template capacityVolume
+    // Update soup item(s) to match template capacityVolume (빈 슬롯일 때만)
     return separates.map((item) => {
-      if (item.typeCode === TYPE_FOODS.SOUP) {
+      if (item.typeCode === TYPE_FOODS.SOUP && !item.code) {
         return { ...item, capacityVolume: soupTemplate.capacityVolume };
       }
       return item;
@@ -750,14 +753,16 @@ const DietModal = ({
         return item; // already matches, keep as is
       }
 
-      // Fallback: match by typeCode and overwrite capacityVolume
+      // Fallback: match by typeCode. 빈 슬롯(item.code 없음)일 때만 capacityVolume을 덮어쓴다.
       const looseMatchIndex = template.findIndex(
         (t) => t.typeCode === item.typeCode
       );
 
       if (looseMatchIndex !== -1) {
         const matched = template.splice(looseMatchIndex, 1)[0];
-        return { ...item, capacityVolume: matched.capacityVolume };
+        return item.code
+          ? item
+          : { ...item, capacityVolume: matched.capacityVolume };
       }
 
       // No match: return as is
@@ -774,9 +779,9 @@ const DietModal = ({
 
     if (!soupTemplate) return separates;
 
-    // Update soup item(s) to match template capacityVolume
+    // Update soup item(s) to match template capacityVolume (빈 슬롯일 때만)
     return separates.map((item) => {
-      if (item.typeCode === TYPE_FOODS.SOUP) {
+      if (item.typeCode === TYPE_FOODS.SOUP && !item.code) {
         return { ...item, capacityVolume: soupTemplate.capacityVolume };
       }
       return item;
@@ -842,14 +847,16 @@ const DietModal = ({
         return item; // already matches, keep as is
       }
 
-      // Fallback: match by typeCode and overwrite capacityVolume
+      // Fallback: match by typeCode. 빈 슬롯(item.code 없음)일 때만 capacityVolume을 덮어쓴다.
       const looseMatchIndex = template.findIndex(
         (t) => t.typeCode === item.typeCode
       );
 
       if (looseMatchIndex !== -1) {
         const matched = template.splice(looseMatchIndex, 1)[0];
-        return { ...item, capacityVolume: matched.capacityVolume };
+        return item.code
+          ? item
+          : { ...item, capacityVolume: matched.capacityVolume };
       }
 
       // No match: return as is
@@ -866,9 +873,9 @@ const DietModal = ({
 
     if (!soupTemplate) return separates;
 
-    // Update soup item(s) to match template capacityVolume
+    // Update soup item(s) to match template capacityVolume (빈 슬롯일 때만)
     return separates.map((item) => {
-      if (item.typeCode === TYPE_FOODS.SOUP) {
+      if (item.typeCode === TYPE_FOODS.SOUP && !item.code) {
         return { ...item, capacityVolume: soupTemplate.capacityVolume };
       }
       return item;
@@ -932,6 +939,8 @@ const DietModal = ({
       if (matchIndex !== -1) {
         const matched = template[matchIndex];
         usedIndices.add(matchIndex);
+        // 이미 특정 음식이 선택된 슬롯(item.code 존재)은 그 음식의 실제 용량을 유지한다.
+        if (item.code) return item;
         return {
           ...item,
           capacityVolume: matched.capacityVolume
@@ -941,12 +950,13 @@ const DietModal = ({
       return item;
     });
 
-    // Handle vegetable rule: volumes should be 90, 90, 60
+    // Handle vegetable rule: volumes should be 90, 90, 60 (빈 슬롯일 때만)
     const vegetables = updatedItems.filter(
       (item) => item.typeCode === TYPE_FOODS.VEGETABLE
     );
 
     const fixedVegetables = vegetables.map((item, index) => {
+      if (item.code) return item;
       if (index < 2) {
         return { ...item, capacityVolume: 90 };
       }
@@ -969,9 +979,9 @@ const DietModal = ({
 
     if (!soupTemplate) return separates;
 
-    // Update soup item(s) to match template capacityVolume
+    // Update soup item(s) to match template capacityVolume (빈 슬롯일 때만)
     return separates.map((item) => {
-      if (item.typeCode === TYPE_FOODS.SOUP) {
+      if (item.typeCode === TYPE_FOODS.SOUP && !item.code) {
         return { ...item, capacityVolume: soupTemplate.capacityVolume };
       }
       return item;
