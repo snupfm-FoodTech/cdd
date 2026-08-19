@@ -1,14 +1,14 @@
 import StyledComponentsRegistry from '@/lib/registry';
 import TanstackQueryProvider from '@/lib/tanstack-query-provider';
 import type { Metadata } from 'next';
-// import { Noto_Sans_KR } from 'next/font/google';
+import '@fontsource/noto-sans-kr/korean-400.css';
+import '@fontsource/noto-sans-kr/korean-500.css';
+import '@fontsource/noto-sans-kr/korean-700.css';
 import { BASE_PATH } from '@/constants';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import RouteChangeHandler from '@/lib/route-change-handler';
 import { Provider as JotaiProvider } from 'jotai';
-
-// const notoSanKr = Noto_Sans_KR({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Customized Diet Design',
@@ -26,7 +26,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      {/* <body className={notoSanKr.className}> */}
       <body>
         <TanstackQueryProvider>
           <StyledComponentsRegistry>

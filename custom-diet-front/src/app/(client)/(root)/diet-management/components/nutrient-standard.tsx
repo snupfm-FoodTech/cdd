@@ -166,6 +166,21 @@ const NutrientStandard = ({
     }
 
     if (typeName === '건강관리식') {
+      if (name.includes('뇌 건강')) {
+        return (
+          <div className="space-y-2 text-sm leading-relaxed text-gray-400">
+            <p>
+              <strong>건강관리식 (뇌 건강)</strong>
+            </p>
+            <p>
+              임상영양사 자문: 인지 기능 유지와 신경 전달물질 합성에 관여하는
+              비타민 A, 티아민, 비타민 C, 비타민 D, 철 등의 영양소가 충분히
+              공급되도록 구성한 식단입니다.
+            </p>
+          </div>
+        );
+      }
+
       return (
         <div className="space-y-2 text-sm leading-relaxed text-gray-400">
           <p>

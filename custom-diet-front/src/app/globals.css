@@ -99,6 +99,15 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family:
+      'Noto Sans KR',
+      ui-sans-serif,
+      system-ui,
+      sans-serif,
+      'Apple Color Emoji',
+      'Segoe UI Emoji',
+      'Segoe UI Symbol',
+      'Noto Color Emoji';
   }
 
   input[type='number']::-webkit-inner-spin-button,
