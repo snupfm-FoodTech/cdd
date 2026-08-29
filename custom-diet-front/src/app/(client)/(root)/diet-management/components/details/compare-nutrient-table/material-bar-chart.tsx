@@ -7,140 +7,159 @@ import {
 import { GroupedMaterial } from '@/types/food.type';
 import { formatDecimal } from '@/utils/format.util';
 import { useMemo } from 'react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
+} from 'recharts';
+import { useMediaQuery } from 'usehooks-ts';
 
-// 식품군은 순서가 없는 항목을 "양"으로 비교하는 자리다. 항목마다 다른 색을 주면
-// 막대 길이가 이미 말해주는 정보를 색이 한 번 더 말하면서, 색이 무언가를 뜻한다는
-// 오해만 남는다. 한 가지 색으로 두고 정해진 순서로 세우는 편이 훨씬 빨리 읽힌다.
-const BAR_COLOR = '#2a78d6';
+// 판정 배지가 초록·노랑·빨강을 쓰므로 빨강과 딥그린은 빼고, 쿨톤을 앞 슬롯에 뒀다.
+// 색각이상 대비 검증 통과 (최악 인접쌍 ΔE 6.1 - 축 라벨과 범례가 이름을 함께
+// 표시하므로 색만으로 구분하지 않는다).
+const GROUP_COLORS: Record<FoodGroupName, string> = {
+  [FOOD_GROUPS.GRAIN]: '#2a78d6',
+  [FOOD_GROUPS.PROTEIN]: '#eb6834',
+  [FOOD_GROUPS.VEGETABLE]: '#4a3aa7',
+  [FOOD_GROUPS.FRUIT]: '#e87ba4',
+  [FOOD_GROUPS.DAIRY]: '#1baf7a',
+  [FOOD_GROUPS.FAT_SUGAR]: '#eda100',
+  // 양념·기타는 균형을 보는 대상이 아니라 무채색으로 둔다
+  [FOOD_GROUPS.SEASONING]: '#a8b0ba',
+  [FOOD_GROUPS.ETC]: '#c3c2b7'
+};
 
-// 양념·기타는 균형을 보는 대상이 아니라서 6군 뒤에 회색으로 따로 세운다.
 const SIDE_GROUPS: FoodGroupName[] = [FOOD_GROUPS.SEASONING, FOOD_GROUPS.ETC];
-const SIDE_BAR_COLOR = '#a8b0ba';
-
-interface FoodGroupRow {
-  name: FoodGroupName;
-  weight: number;
-  isSide: boolean;
-}
 
 interface MaterialBarChartProps {
   groupMaterials: GroupedMaterial[];
 }
 
 const MaterialBarChart = ({ groupMaterials }: MaterialBarChartProps) => {
-  const { rows, mainTotal, sideTotal } = useMemo(() => {
-    const weights = new Map<FoodGroupName, number>();
+  const isMobile = useMediaQuery('(max-width: 1024px)');
 
+  const data = useMemo(() => {
+    const weights = new Map<FoodGroupName, number>();
     groupMaterials.forEach((item) => {
       const group = resolveFoodGroup(item.categoryId);
       weights.set(group, (weights.get(group) ?? 0) + item.recipeWeight);
     });
 
-    // 담기지 않은 식품군도 자리를 지킨다 - "채소류가 아예 없다"는 것도 읽어야 할 정보다.
-    const allRows: FoodGroupRow[] = FOOD_GROUP_ORDER.map((name) => ({
-      name,
-      weight: weights.get(name) ?? 0,
-      isSide: SIDE_GROUPS.includes(name)
-    }));
-
-    return {
-      rows: allRows.filter((row) => !row.isSide || row.weight > 0),
-      mainTotal: allRows
-        .filter((row) => !row.isSide)
-        .reduce((acc, row) => acc + row.weight, 0),
-      sideTotal: allRows
-        .filter((row) => row.isSide)
-        .reduce((acc, row) => acc + row.weight, 0)
-    };
+    // 6군은 담기지 않았어도 자리를 지킨다 - "채소류가 아예 없다"도 읽어야 할 정보다.
+    return FOOD_GROUP_ORDER.map((name) => ({
+      categoryName: name,
+      recipeWeight: weights.get(name) ?? 0
+    })).filter(
+      (row) => !SIDE_GROUPS.includes(row.categoryName) || row.recipeWeight > 0
+    );
   }, [groupMaterials]);
 
-  if (mainTotal === 0 && sideTotal === 0) {
+  const total = data.reduce((acc, cur) => acc + cur.recipeWeight, 0);
+
+  if (total === 0) {
     return (
-      <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+      <p className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
         식품군 정보를 가진 식재료가 아직 없습니다.
       </p>
     );
   }
 
-  const missing = rows.filter((row) => !row.isSide && row.weight === 0);
+  const formatWeight = (value: number) => `${value.toFixed(1)} g`;
+
+  const Legend = () => (
+    <ul className="flex flex-wrap gap-x-4 gap-y-2 px-1 pb-3 text-sm">
+      {data.map((entry) => (
+        <li key={entry.categoryName} className="flex items-center gap-1.5">
+          <span
+            className="inline-block h-2.5 w-2.5 rounded-sm"
+            style={{ backgroundColor: GROUP_COLORS[entry.categoryName] }}
+          />
+          <span className="text-foreground">{entry.categoryName}</span>
+          <span className="font-semibold text-foreground">
+            {formatWeight(entry.recipeWeight)}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+
+  // 모바일: 가로 막대 — 식품군 이름이 세로축에서 줄바꿈되지 않고 그대로 읽힌다.
+  if (isMobile) {
+    const rowHeight = 40;
+    return (
+      <div className="w-full">
+        <Legend />
+        <ResponsiveContainer width="100%" height={data.length * rowHeight + 20}>
+          <BarChart
+            data={data}
+            layout="vertical"
+            margin={{ top: 4, right: 40, left: 8, bottom: 4 }}
+          >
+            <CartesianGrid horizontal={false} stroke="#e1e0d9" />
+            <XAxis type="number" hide />
+            <YAxis
+              type="category"
+              dataKey="categoryName"
+              width={110}
+              tickLine={false}
+              axisLine={false}
+              tick={{ fill: '#52514e', fontSize: 12 }}
+            />
+            <Tooltip formatter={(value: number) => formatWeight(value)} />
+            <Bar dataKey="recipeWeight" radius={[0, 4, 4, 0]} barSize={20}>
+              {data.map((entry) => (
+                <Cell
+                  key={entry.categoryName}
+                  fill={GROUP_COLORS[entry.categoryName]}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
-      <div className="mb-4 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <span className="text-sm text-muted-foreground">6가지 식품군 합계</span>
-        <span className="text-xl font-bold tabular-nums tracking-tight text-foreground">
-          {formatDecimal(mainTotal)} g
-        </span>
-        {sideTotal > 0 && (
-          <span className="text-sm text-muted-foreground">
-            · 양념·기타 {formatDecimal(sideTotal)} g 별도
-          </span>
-        )}
-      </div>
-
-      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-        {rows.map((row) => {
-          // 비중은 6군 합계를 100으로 본다. 양념까지 분모에 넣으면
-          // 식단을 바꾸지 않아도 간장 몇 g 에 채소 비중이 흔들린다.
-          const share = mainTotal > 0 ? (row.weight / mainTotal) * 100 : 0;
-          const isEmpty = row.weight === 0;
-
-          return (
-            <li
-              key={row.name}
-              className={`flex flex-col gap-2 rounded-lg border p-3.5 transition-colors ${
-                isEmpty
-                  ? 'border-dashed bg-transparent'
-                  : 'bg-[#fbfbfa] hover:border-[#c7d9ef]'
-              }`}
-            >
-              <p
-                className={`text-sm font-medium leading-snug ${
-                  isEmpty ? 'text-muted-foreground' : 'text-foreground'
-                }`}
-                style={{ wordBreak: 'keep-all' }}
-              >
-                {row.name}
-              </p>
-
-              <p className="flex items-baseline gap-1">
-                <span
-                  className={`text-2xl font-bold leading-none tabular-nums tracking-tight ${
-                    isEmpty ? 'text-muted-foreground/60' : 'text-foreground'
-                  }`}
-                >
-                  {formatDecimal(row.weight)}
-                </span>
-                <span className="text-sm text-muted-foreground">g</span>
-              </p>
-
-              {/* 막대 길이와 옆의 % 는 같은 값이다 - 둘 다 6군 합계 대비 비중 */}
-              <div className="mt-auto flex items-center gap-2">
-                <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#eef1f5]">
-                  {!isEmpty && (
-                    <span
-                      className="block h-full rounded-full"
-                      style={{
-                        width: `${Math.max(1.5, row.isSide ? 100 : share)}%`,
-                        backgroundColor: row.isSide ? SIDE_BAR_COLOR : BAR_COLOR
-                      }}
-                    />
-                  )}
-                </span>
-                <span className="shrink-0 text-xs font-semibold tabular-nums text-muted-foreground">
-                  {row.isSide ? '별도' : `${formatDecimal(share)}%`}
-                </span>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-
-      {missing.length > 0 && (
-        <p className="mt-3 text-xs text-muted-foreground">
-          {missing.map((row) => row.name).join(', ')}가 이 식단에 없습니다.
-        </p>
-      )}
+      <Legend />
+      <ResponsiveContainer width="100%" height={360}>
+        <BarChart data={data} margin={{ top: 24, right: 16, left: 0, bottom: 8 }}>
+          <CartesianGrid vertical={false} stroke="#e1e0d9" />
+          <XAxis
+            dataKey="categoryName"
+            tickLine={false}
+            axisLine={{ stroke: '#c3c2b7' }}
+            tick={{ fill: '#52514e', fontSize: 12 }}
+            interval={0}
+          />
+          <YAxis hide />
+          <Tooltip formatter={(value: number) => formatWeight(value)} />
+          <Bar
+            dataKey="recipeWeight"
+            radius={[4, 4, 0, 0]}
+            barSize={40}
+            label={{
+              position: 'top',
+              formatter: (value: number) => formatWeight(value),
+              fill: '#52514e',
+              fontSize: 12
+            }}
+          >
+            {data.map((entry) => (
+              <Cell
+                key={entry.categoryName}
+                fill={GROUP_COLORS[entry.categoryName]}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 };
