@@ -33,6 +33,9 @@ interface DietMenuProps {
   onUpdateItem?: () => void;
   onDeleteItem?: () => void;
   onDetailItem?: () => void;
+  selectable?: boolean;
+  selectedIds?: number[];
+  onToggleSelect?: (id: number) => void;
 }
 
 const DietMenu = ({
@@ -41,7 +44,10 @@ const DietMenu = ({
   isDesktop = true,
   onUpdateItem,
   onDeleteItem,
-  onDetailItem
+  onDetailItem,
+  selectable = false,
+  selectedIds = [],
+  onToggleSelect
 }: DietMenuProps) => {
   const router = useRouter();
 
@@ -82,6 +88,9 @@ const DietMenu = ({
             onDetailItem && onDetailItem();
           }}
           onFavorite={handleFavorite}
+          selectable={selectable}
+          selected={selectedIds.includes(diet.id)}
+          onToggleSelect={onToggleSelect}
         />
       );
     });
@@ -143,7 +152,7 @@ const DietMenu = ({
         <div className="mr-3 h-full space-y-4">
           {favouriteDiets.length > 0 && (
             <div>
-              <DividerWithText text="즐겨찾기" />
+              <DividerWithText text="즐겨찾기 식단" />
               <div className="space-y-2">
                 {loading ? (
                   <DietItemSkeleton count={2} />

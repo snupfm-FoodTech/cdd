@@ -1,6 +1,10 @@
 package egovframework.let.diet.web;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -8,8 +12,11 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Positive;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +33,7 @@ import egovframework.com.cmm.dto.ResponseDto;
 import egovframework.com.cmm.util.ResponseUtil;
 import egovframework.com.cmm.validation.annotation.NullOrNotBlank;
 import egovframework.com.cmm.validation.annotation.NullOrPositiveNo;
+import egovframework.let.diet.dto.DietDetailDto;
 import egovframework.let.diet.dto.DietFoodDto;
 import egovframework.let.diet.param.AddDietParam;
 import egovframework.let.diet.param.AddFoodToTrayParam;
@@ -34,8 +42,10 @@ import egovframework.let.diet.param.AddNutritionSummaryToDietParam;
 import egovframework.let.diet.param.AddPriceToDietParam;
 import egovframework.let.diet.param.CheckAllergenFoodParam;
 import egovframework.let.diet.param.DietTrayParam;
+import egovframework.let.diet.param.ExportDietsExcelParam;
 import egovframework.let.diet.param.SaveExcludedAllergenToDietParam;
 import egovframework.let.diet.param.SaveFoodRecipeParam;
+import egovframework.let.diet.param.SaveRecipeParam;
 import egovframework.let.diet.param.UpdateDietParam;
 import egovframework.let.diet.param.UpdateMaterialNameParam;
 import egovframework.let.diet.service.EgovDietService;
@@ -79,7 +89,7 @@ public class EgovDietController {
 	@PutMapping("/{dietId}/favourite-flag/{favFlag}")
 	public ResponseEntity<ResponseDto> modifyDietFavFlag(@PathVariable("dietId") int dietId,
 			@Pattern(regexp = "Y|N", message = "{dto.flag.invalid}") @PathVariable("favFlag") String favFlag) {
-		
+
 		dietService.modifyDietFavFlag(dietId, favFlag);
 		return ResponseUtil.get("OK", HttpStatus.OK);
 	}
@@ -97,7 +107,7 @@ public class EgovDietController {
 			@Valid @RequestBody AddPriceToDietParam param) {
 		return ResponseUtil.get(dietService.addPriceToDiet(dietId, param), HttpStatus.CREATED);
 	}
-	
+
 	@Authorized
 	@PostMapping("/{dietId}/recommend-food")
 	public ResponseEntity<ResponseDto> recommendFoodByDietId(
@@ -109,7 +119,7 @@ public class EgovDietController {
 		}
 		return ResponseUtil.get(dietService.recommendFoodByDietId(dietId, month), HttpStatus.OK);
 	}
-	
+
 	@Authorized
 	@PostMapping("/{dietId}/save-excluded-allergen")
 	public ResponseEntity<ResponseDto> saveExcludedAllergenToDiet(
@@ -117,7 +127,7 @@ public class EgovDietController {
 			@Valid @RequestBody SaveExcludedAllergenToDietParam param
 			) {
 		param.setDietId(dietId);
-		
+
 		return ResponseUtil.get(dietService.saveExcludedAllergenToDiet(param), HttpStatus.OK);
 	}
 
@@ -190,7 +200,7 @@ public class EgovDietController {
 		if (fdNm != null && !fdNm.isBlank()) {
 			food.setName(fdNm);
 		}
-		
+
 		return ResponseUtil.get(food, HttpStatus.OK);
 	}
 
@@ -206,6 +216,35 @@ public class EgovDietController {
 	}
 
 	@Authorized
+	@GetMapping("/foods/paging")
+	public ResponseEntity<ResponseDto> findAllFoodWithPaging(
+			@Positive(message = "{page.positive}") @NotNull(message = "{page.positive}")
+			@RequestParam(required = true, name = "page") Integer page,
+			@Positive(message = "{limit.positive}") @NotNull(message = "{limit.positive}")
+			@RequestParam(required = true, name = "limit") Integer limit,
+			@NullOrNotBlank(fieldName = "keyword") @RequestParam(required = false, name = "keyword") String keyword,
+			@NullOrNotBlank(fieldName = "fdTpCd") @RequestParam(required = false, name = "fdTpCd") String fdTpCd,
+			@NullOrNotBlank(fieldName = "matCd") @RequestParam(required = false, name = "matCd") String matCd,
+			@RequestParam(required = false, name = "excludedAllergenIds") List<Integer> excludedAllergenIds
+			) {
+		return ResponseUtil.get(dietService.findAllFoodWithPaging(page, limit, keyword, fdTpCd, matCd, excludedAllergenIds), HttpStatus.OK);
+	}
+
+	@Authorized
+	@GetMapping("/foods/my-recipes/paging")
+	public ResponseEntity<ResponseDto> findMyFoodsWithPaging(
+			@Positive(message = "{page.positive}") @NotNull(message = "{page.positive}")
+			@RequestParam(required = true, name = "page") Integer page,
+			@Positive(message = "{limit.positive}") @NotNull(message = "{limit.positive}")
+			@RequestParam(required = true, name = "limit") Integer limit,
+			@NullOrNotBlank(fieldName = "keyword") @RequestParam(required = false, name = "keyword") String keyword,
+			@NullOrNotBlank(fieldName = "fdTpCd") @RequestParam(required = false, name = "fdTpCd") String fdTpCd,
+			@NullOrNotBlank(fieldName = "matCd") @RequestParam(required = false, name = "matCd") String matCd
+			) {
+		return ResponseUtil.get(dietService.findMyFoodsWithPaging(page, limit, keyword, fdTpCd, matCd), HttpStatus.OK);
+	}
+
+	@Authorized
 	@GetMapping("/foods/recommend")
 	public ResponseEntity<ResponseDto> recommendFood(
 			@Positive(message = "{limit.positive}") @RequestParam(required = true, name = "limit", defaultValue = "6") int limit,
@@ -217,20 +256,40 @@ public class EgovDietController {
 			@RequestParam(required = false, name = "currentTrayFoods") List<String> currentTrayFoods) {
 		return ResponseUtil.get(dietService.recommendFood(limit, fdCd, fdTpCd, excludedAllergenIds, dietId, currentFoodCode, currentTrayFoods), HttpStatus.OK);
 	}
-	
+
 	@Authorized
 	@GetMapping("/foods/{fdCd}/conversion")
 	public ResponseEntity<ResponseDto> findFoodConversionByFdCd(@PathVariable("fdCd") String fdCd) {
 		return ResponseUtil.get(dietService.findFoodConversionByFdCd(fdCd), HttpStatus.OK);
 	}
-	
+
 	@Authorized
 	@PostMapping("/foods/save-recipe")
 	public ResponseEntity<ResponseDto> saveFoodRecipe(@Valid @RequestBody SaveFoodRecipeParam param) {
 		dietService.saveFoodRecipe(param);
 		return ResponseUtil.get("OK", HttpStatus.OK);
 	}
-	
+
+	@Authorized
+	@PostMapping("/recipes")
+	public ResponseEntity<ResponseDto> createRecipe(@Valid @RequestBody SaveRecipeParam param) {
+		return ResponseUtil.get(dietService.createRecipe(param), HttpStatus.CREATED);
+	}
+
+	@Authorized
+	@PutMapping("/recipes/{fdCd}")
+	public ResponseEntity<ResponseDto> updateRecipe(@PathVariable("fdCd") String fdCd,
+			@Valid @RequestBody SaveRecipeParam param) {
+		return ResponseUtil.get(dietService.updateRecipe(fdCd, param), HttpStatus.OK);
+	}
+
+	@Authorized
+	@DeleteMapping("/recipes/{fdCd}")
+	public ResponseEntity<ResponseDto> deleteRecipe(@PathVariable("fdCd") String fdCd) {
+		dietService.deleteRecipe(fdCd);
+		return ResponseUtil.get("OK", HttpStatus.OK);
+	}
+
 	@Authorized
 	@GetMapping("/materials/paging")
 	public ResponseEntity<ResponseDto> findAllMaterialPaging(
@@ -242,7 +301,7 @@ public class EgovDietController {
 			@RequestParam(required = false, name = "excludedAllergenIds") List<Integer> excludedAllergenIds) {
 		return ResponseUtil.get(dietService.findAllMaterialWithPaging(page, limit, keyword, excludedAllergenIds), HttpStatus.OK);
 	}
-	
+
 	@Authorized
 	@GetMapping("/materials")
 	public ResponseEntity<ResponseDto> findAllMaterial(
@@ -252,13 +311,13 @@ public class EgovDietController {
 			) {
 		return ResponseUtil.get(dietService.findAllMaterial(codeList, representativeId, excludedAllergenIds), HttpStatus.OK);
 	}
-	
+
 	@Authorized
 	@GetMapping("/materials/type")
 	public ResponseEntity<ResponseDto> findMaterialType() {
 		return ResponseUtil.get(dietService.findMaterialType(), HttpStatus.OK);
 	}
-	
+
 	@Authorized
 	@GetMapping("/materials/category")
 	public ResponseEntity<ResponseDto> findMaterialCategory(
@@ -266,7 +325,7 @@ public class EgovDietController {
 			) {
 		return ResponseUtil.get(dietService.findMaterialCategory(typeCode), HttpStatus.OK);
 	}
-	
+
 	@Authorized
 	@GetMapping("/materials/representative")
 	public ResponseEntity<ResponseDto> findMaterialRepresentative(
@@ -274,13 +333,13 @@ public class EgovDietController {
 			) {
 		return ResponseUtil.get(dietService.findMaterialRepresentative(categoryId), HttpStatus.OK);
 	}
-	
+
 	@Authorized
 	@PostMapping("/materials")
 	public ResponseEntity<ResponseDto> addNewMaterial(@Valid @RequestBody AddMaterialMaterialParam param) {
 		return ResponseUtil.get(dietService.addNewMaterial(param), HttpStatus.CREATED);
 	}
-	
+
 	@Authorized
 	@GetMapping("/nutrients")
 	public ResponseEntity<ResponseDto> findAllNutrient(@RequestParam(required = false, name = "nutrCd") String nutrCd) {
@@ -294,37 +353,88 @@ public class EgovDietController {
 	}
 
 	@Authorized
+	@GetMapping("/{dietId}/export/excel")
+	public ResponseEntity<byte[]> exportDietToExcel(@PathVariable("dietId") int dietId) {
+		DietDetailDto diet = dietService.findDietDetailById(dietId);
+		byte[] excelBytes = dietService.exportDietToExcel(dietId);
+
+		String fileName = sanitizeFileNamePart(diet.getName()) + "_" + currentTimestamp() + ".xlsx";
+
+		return buildExcelFileResponse(excelBytes, fileName);
+	}
+
+	@Authorized
+	@PostMapping("/export/excel")
+	public ResponseEntity<byte[]> exportDietsToExcel(@Valid @RequestBody ExportDietsExcelParam param) {
+		List<Integer> dietIds = param.getDietIds();
+		byte[] excelBytes = dietService.exportDietsToExcel(dietIds);
+
+		String fileName = "선택식단_" + dietIds.size() + "건_" + currentTimestamp() + ".xlsx";
+
+		return buildExcelFileResponse(excelBytes, fileName);
+	}
+
+	private String currentTimestamp() {
+		return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+	}
+
+	private String sanitizeFileNamePart(String name) {
+		if (name == null || name.isBlank()) {
+			return "식단";
+		}
+		return name.replaceAll("[\\\\/:*?\"<>|]", "_").trim();
+	}
+
+	private ResponseEntity<byte[]> buildExcelFileResponse(byte[] excelBytes, String fileName) {
+		String encodedFileName;
+		try {
+			encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString()).replace("+", "%20");
+		} catch (UnsupportedEncodingException e) {
+			encodedFileName = fileName;
+		}
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.add(HttpHeaders.CONTENT_DISPOSITION,
+				"attachment; filename=\"download.xlsx\"; filename*=UTF-8''" + encodedFileName);
+
+		return ResponseEntity.ok()
+				.headers(headers)
+				.contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+				.body(excelBytes);
+	}
+
+	@Authorized
 	@PostMapping("/{dietId}/nutrition-summary")
 	public ResponseEntity<ResponseDto> addNutritionSummaryToDiet(@PathVariable("dietId") int dietId,
 			@Valid @RequestBody List<AddNutritionSummaryToDietParam> params) {
 		return ResponseUtil.get(dietService.addNutritionSummaryToDiet(dietId, params), HttpStatus.CREATED);
 	}
-	
+
 	@Authorized
 	@GetMapping("/reports/monthly-price")
 	public ResponseEntity<ResponseDto> findReportMonthlyPrice() {
 		return ResponseUtil.get(dietService.findReportMonthlyPrice(), HttpStatus.OK);
 	}
-	
+
 	@Authorized
 	@GetMapping("/reports/nutrition-standard-category")
 	public ResponseEntity<ResponseDto> findReportNutrStandardCate() {
 		return ResponseUtil.get(dietService.findReportNutrStandardCate(), HttpStatus.OK);
 	}
-	
+
 	@Authorized
 	@PostMapping("/update-food-nutrition-data")
 	public ResponseEntity<ResponseDto> updateFoodNutritionData() {
 		dietService.updateFoodNutritionData();
 		return ResponseUtil.get("OK", HttpStatus.OK);
 	}
-	
+
 	@Authorized
 	@GetMapping("/allergens")
 	public ResponseEntity<ResponseDto> getAllAllergen() {
 		return ResponseUtil.get(dietService.getAllAllergen(), HttpStatus.OK);
 	}
-	
+
 	@Authorized
 	@PostMapping("/allergens/check-food")
 	public ResponseEntity<ResponseDto> checkAllergenFood(

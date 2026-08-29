@@ -40,8 +40,13 @@ public class DietFoodDto {
 	
 	private String recipeDescription;
 	
+	/** 사용자가 직접 만든 레시피이면 "Y" (수정/삭제 가능) */
+	private String ownFlag;
+	
 	private List<DietAllergenDto> allergens;
 	
 	private List<DietMaterialDto> materials;
-	
+
+	private Integer totalRecordNo;
+
 }

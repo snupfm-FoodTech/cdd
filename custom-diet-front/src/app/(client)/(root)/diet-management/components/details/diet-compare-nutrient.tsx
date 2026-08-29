@@ -7,7 +7,8 @@ import { useEffect, useState } from 'react';
 import {
   calculateNutrientTotals,
   convertItemArrayToFoods,
-  mergeNutrients
+  mergeNutrients,
+  withSeparateRiceIfSevenDish
 } from '../../helpers';
 import NutrientTable from './compare-nutrient-table/nutrient-table';
 
@@ -41,7 +42,7 @@ const DietCompareNutrient = ({
       const checkFoods = filteredFoods.every((item) => item.code !== undefined);
       if (!checkFoods) return;
       const nutrientTotals: NutrientTotal[] = calculateNutrientTotals(
-        convertItemArrayToFoods(foods)
+        withSeparateRiceIfSevenDish(convertItemArrayToFoods(foods))
       );
       const cNutrients: NutrientCompare[] = mergeNutrients(
         standard?.nutrients,

@@ -69,6 +69,8 @@ export const DIET_MANAGEMENT_UPDATE_URL = '/diet-management/update';
 export const DIET_MANAGEMENT_DIET_DETAILS = '/diet-management/diet-details';
 export const DIET_MANAGEMENT_MY_FOODS = '/diet-management/my-foods';
 
+export const RECIPES_URL = '/recipes';
+
 export const CLIENT_INFO = '/client-info';
 export const CLIENT_INFO_UPDATE = '/client-info/update';
 export const CLIENT_INFO_CHANGE_PASSWORD = '/client-info/change-password';
@@ -122,6 +124,10 @@ export const CLIENT_ROUTES: ClientNavItem[] = [
   {
     title: '식단 관리',
     href: DIET_MANAGEMENT_URL
+  },
+  {
+    title: '레시피',
+    href: RECIPES_URL
   },
   {
     title: '비즈 솔루션',

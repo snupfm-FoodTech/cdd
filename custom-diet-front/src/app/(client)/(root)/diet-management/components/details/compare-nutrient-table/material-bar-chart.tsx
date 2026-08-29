@@ -1,174 +1,146 @@
-import { GroupedMaterial } from '@/types/food.type';
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend
-} from 'recharts';
-import { useMediaQuery } from 'usehooks-ts';
+  FOOD_GROUPS,
+  FOOD_GROUP_ORDER,
+  FoodGroupName,
+  resolveFoodGroup
+} from '@/constants/food-group.constant';
+import { GroupedMaterial } from '@/types/food.type';
+import { formatDecimal } from '@/utils/format.util';
+import { useMemo } from 'react';
+
+// 식품군은 순서가 없는 항목을 "양"으로 비교하는 자리다. 항목마다 다른 색을 주면
+// 막대 길이가 이미 말해주는 정보를 색이 한 번 더 말하면서, 색이 무언가를 뜻한다는
+// 오해만 남는다. 한 가지 색으로 두고 정해진 순서로 세우는 편이 훨씬 빨리 읽힌다.
+const BAR_COLOR = '#2a78d6';
+
+// 양념·기타는 균형을 보는 대상이 아니라서 6군 뒤에 회색으로 따로 세운다.
+const SIDE_GROUPS: FoodGroupName[] = [FOOD_GROUPS.SEASONING, FOOD_GROUPS.ETC];
+const SIDE_BAR_COLOR = '#a8b0ba';
+
+interface FoodGroupRow {
+  name: FoodGroupName;
+  weight: number;
+  isSide: boolean;
+}
 
 interface MaterialBarChartProps {
   groupMaterials: GroupedMaterial[];
 }
 
-const COLORS = [
-  '#34d399',
-  '#f87171',
-  '#3b82f6',
-  '#facc15',
-  '#a78bfa',
-  '#60a5fa'
-];
-
 const MaterialBarChart = ({ groupMaterials }: MaterialBarChartProps) => {
-  const isMobileOrTablet = useMediaQuery('(max-width: 1024px)');
-  const formatWeight = (value: number) => `${value.toFixed(2)} g`;
+  const { rows, mainTotal, sideTotal } = useMemo(() => {
+    const weights = new Map<FoodGroupName, number>();
 
-  const CustomLegend = ({ payload }: any) => {
-    return (
-      <ul className="flex flex-wrap gap-4 px-4 py-2 text-sm">
-        {payload.map((entry: any, index: number) => (
-          <li key={`legend-${index}`} className="flex items-center space-x-2">
-            <span
-              style={{
-                display: 'inline-block',
-                width: 10,
-                height: 10,
-                backgroundColor: entry.color
-              }}
-            />
-            <span>
-              {entry.payload.categoryName} (
-              {entry.payload.recipeWeight.toFixed(2)} g)
-            </span>
-          </li>
-        ))}
-      </ul>
-    );
-  };
-
-  // Custom Label below X Axis
-  const CustomLabel = (props: any) => {
-    const { x, y, width, value } = props;
-    return (
-      <text
-        x={x + width / 2}
-        y={y - 10}
-        fill="#666"
-        textAnchor="middle"
-        fontSize={14}
-        fontWeight={500}
-      >
-        {formatWeight(value)}
-      </text>
-    );
-  };
-
-  // Custom Label for Chart Tick
-  const CustomTick = (props: any) => {
-    const { x, y, payload } = props;
-    const text = payload.value;
-    const words = text.split(' '); // Split label by spaces
-
-    // Break text into multiple lines if too long
-    const maxCharsPerLine = 7;
-    const lines = [];
-    let currentLine = '';
-
-    words.forEach((word: string) => {
-      if ((currentLine + word).length > maxCharsPerLine) {
-        lines.push(currentLine);
-        currentLine = word; // Start a new line with this word
-      } else {
-        currentLine += (currentLine ? ' ' : '') + word;
-      }
+    groupMaterials.forEach((item) => {
+      const group = resolveFoodGroup(item.categoryId);
+      weights.set(group, (weights.get(group) ?? 0) + item.recipeWeight);
     });
-    lines.push(currentLine); // Push the last line
 
-    return (
-      <g transform={`translate(${x},${y})`}>
-        {lines.map((line, index) => (
-          <text
-            key={index}
-            x={0}
-            y={index * 13} // Adjust the line height
-            dy={10}
-            textAnchor="middle"
-            fill="#0059b2"
-            fontSize={10}
-            fontWeight={600}
-          >
-            {line}
-          </text>
-        ))}
-      </g>
-    );
-  };
+    // 담기지 않은 식품군도 자리를 지킨다 - "채소류가 아예 없다"는 것도 읽어야 할 정보다.
+    const allRows: FoodGroupRow[] = FOOD_GROUP_ORDER.map((name) => ({
+      name,
+      weight: weights.get(name) ?? 0,
+      isSide: SIDE_GROUPS.includes(name)
+    }));
 
-  if (isMobileOrTablet) {
+    return {
+      rows: allRows.filter((row) => !row.isSide || row.weight > 0),
+      mainTotal: allRows
+        .filter((row) => !row.isSide)
+        .reduce((acc, row) => acc + row.weight, 0),
+      sideTotal: allRows
+        .filter((row) => row.isSide)
+        .reduce((acc, row) => acc + row.weight, 0)
+    };
+  }, [groupMaterials]);
+
+  if (mainTotal === 0 && sideTotal === 0) {
     return (
-      <>
-        <ResponsiveContainer width="100%" height={350}>
-          <PieChart>
-            <Pie
-              data={groupMaterials}
-              dataKey="recipeWeight"
-              nameKey="categoryName"
-              cx="50%"
-              cy="50%"
-              outerRadius={120}
-              label={({ value }) => `${value.toFixed(2)} g`}
-            >
-              {groupMaterials.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                />
-              ))}
-            </Pie>
-            <Tooltip formatter={(value: number) => formatWeight(value)} />
-          </PieChart>
-        </ResponsiveContainer>
-        {/* Custom legend below with fixed height */}
-        <div className="h-auto w-full">
-          <CustomLegend
-            payload={groupMaterials.map((entry, index) => ({
-              color: COLORS[index % COLORS.length],
-              payload: entry
-            }))}
-          />
-        </div>
-      </>
+      <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+        식품군 정보를 가진 식재료가 아직 없습니다.
+      </p>
     );
   }
 
+  const missing = rows.filter((row) => !row.isSide && row.weight === 0);
+
   return (
     <div className="w-full">
-      <ResponsiveContainer width="100%" height={500}>
-        <BarChart
-          data={groupMaterials}
-          margin={{ top: 20, right: 30, left: 20, bottom: 35 }}
-        >
-          <XAxis
-            dataKey="categoryName"
-            tick={<CustomTick />} //Label
-            interval={0}
-          />
-          <Tooltip formatter={(value: number) => formatWeight(value)} />
-          <Bar
-            dataKey="recipeWeight"
-            fill="#0059b2"
-            name={'레시피 무게'}
-            label={CustomLabel}
-            barSize={40}
-          />
-        </BarChart>
-      </ResponsiveContainer>
+      <div className="mb-4 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <span className="text-sm text-muted-foreground">6가지 식품군 합계</span>
+        <span className="text-xl font-bold tabular-nums tracking-tight text-foreground">
+          {formatDecimal(mainTotal)} g
+        </span>
+        {sideTotal > 0 && (
+          <span className="text-sm text-muted-foreground">
+            · 양념·기타 {formatDecimal(sideTotal)} g 별도
+          </span>
+        )}
+      </div>
+
+      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+        {rows.map((row) => {
+          // 비중은 6군 합계를 100으로 본다. 양념까지 분모에 넣으면
+          // 식단을 바꾸지 않아도 간장 몇 g 에 채소 비중이 흔들린다.
+          const share = mainTotal > 0 ? (row.weight / mainTotal) * 100 : 0;
+          const isEmpty = row.weight === 0;
+
+          return (
+            <li
+              key={row.name}
+              className={`flex flex-col gap-2 rounded-lg border p-3.5 transition-colors ${
+                isEmpty
+                  ? 'border-dashed bg-transparent'
+                  : 'bg-[#fbfbfa] hover:border-[#c7d9ef]'
+              }`}
+            >
+              <p
+                className={`text-sm font-medium leading-snug ${
+                  isEmpty ? 'text-muted-foreground' : 'text-foreground'
+                }`}
+                style={{ wordBreak: 'keep-all' }}
+              >
+                {row.name}
+              </p>
+
+              <p className="flex items-baseline gap-1">
+                <span
+                  className={`text-2xl font-bold leading-none tabular-nums tracking-tight ${
+                    isEmpty ? 'text-muted-foreground/60' : 'text-foreground'
+                  }`}
+                >
+                  {formatDecimal(row.weight)}
+                </span>
+                <span className="text-sm text-muted-foreground">g</span>
+              </p>
+
+              {/* 막대 길이와 옆의 % 는 같은 값이다 - 둘 다 6군 합계 대비 비중 */}
+              <div className="mt-auto flex items-center gap-2">
+                <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#eef1f5]">
+                  {!isEmpty && (
+                    <span
+                      className="block h-full rounded-full"
+                      style={{
+                        width: `${Math.max(1.5, row.isSide ? 100 : share)}%`,
+                        backgroundColor: row.isSide ? SIDE_BAR_COLOR : BAR_COLOR
+                      }}
+                    />
+                  )}
+                </span>
+                <span className="shrink-0 text-xs font-semibold tabular-nums text-muted-foreground">
+                  {row.isSide ? '별도' : `${formatDecimal(share)}%`}
+                </span>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+
+      {missing.length > 0 && (
+        <p className="mt-3 text-xs text-muted-foreground">
+          {missing.map((row) => row.name).join(', ')}가 이 식단에 없습니다.
+        </p>
+      )}
     </div>
   );
 };

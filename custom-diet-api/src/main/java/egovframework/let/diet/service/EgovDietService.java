@@ -30,6 +30,7 @@ import egovframework.let.diet.param.CheckAllergenFoodParam;
 import egovframework.let.diet.param.DietTrayParam;
 import egovframework.let.diet.param.SaveExcludedAllergenToDietParam;
 import egovframework.let.diet.param.SaveFoodRecipeParam;
+import egovframework.let.diet.param.SaveRecipeParam;
 import egovframework.let.diet.param.UpdateDietParam;
 import egovframework.let.diet.param.UpdateMaterialNameParam;
 
@@ -65,9 +66,14 @@ public interface EgovDietService {
 	//foods
 	DietFoodDto findFoodByFdCd(String fdCd);
 	List<DietFoodDto> findAllFood(int limit, String keyword, String fdTpCd, List<Integer> excludedAllergenIds);
+	PagingWrapperDto findAllFoodWithPaging(Integer page, Integer limit, String keyword, String fdTpCd, String matCd, List<Integer> excludedAllergenIds);
+	PagingWrapperDto findMyFoodsWithPaging(Integer page, Integer limit, String keyword, String fdTpCd, String matCd);
 	List<DietFoodDto> recommendFood(int limit, String fdCd, String fdTpCd, List<Integer> excludedAllergenIds, Integer dietId, String currentFoodCode, List<String> currentTrayFoods);
 	DietFoodConversionDto findFoodConversionByFdCd(String fdCd);
 	void saveFoodRecipe(SaveFoodRecipeParam param);
+	DietFoodDto createRecipe(SaveRecipeParam param);
+	DietFoodDto updateRecipe(String fdCd, SaveRecipeParam param);
+	void deleteRecipe(String fdCd);
 	
 	//materials
 	PagingWrapperDto findAllMaterialWithPaging(Integer page, Integer limit, String keyword, List<Integer> excludedAllergenIds);
@@ -89,8 +95,12 @@ public interface EgovDietService {
 	void addDefaultUserTrayTemplate(int usrId);
 	
 	//nutrition summary
-	List<DietNutritionSummaryDto> findDietNutritionSummary(int dietId);
+	List<DietNutritionSummaryDto> findDietNutritionSummary(int dietId);	
+
+	byte[] exportDietToExcel(int dietId);
 	
+	byte[] exportDietsToExcel(List<Integer> dietIds);
+
 	List<DietNutritionSummaryDto> addNutritionSummaryToDiet(int dietId, List<AddNutritionSummaryToDietParam> params);
 	
 	void updateFoodNutritionData();

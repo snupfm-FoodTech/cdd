@@ -9,7 +9,8 @@ import {
   calculateNutrientTotals,
   convertItemArrayToFoods,
   groupMaterialsByCategory,
-  mergeNutrients
+  mergeNutrients,
+  withSeparateRiceIfSevenDish
 } from '../../helpers';
 import MaterialChart from './compare-nutrient-table/material-chart';
 
@@ -40,7 +41,7 @@ const DietCompareChart = ({
       const checkFoods = filteredFoods.every((item) => item.code !== undefined);
       if (!checkFoods) return;
       const nutrientTotals: NutrientTotal[] = calculateNutrientTotals(
-        convertItemArrayToFoods(foods)
+        withSeparateRiceIfSevenDish(convertItemArrayToFoods(foods))
       );
       const cNutrients: NutrientCompare[] = mergeNutrients(
         standard?.nutrients,

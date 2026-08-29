@@ -2,13 +2,16 @@
 
 import { Spinner } from '@/components/spinner';
 import { DIET_MANAGEMENT_URL } from '@/constants/routes';
+
 import {
   useAllergenCheckFood,
   useDiet,
+  useDownloadDietExcel,
   useGetDietValue,
   useSaveExcludedAllergen,
   useScrollPage
 } from '@/hooks/diet.hook';
+
 import DietDetailHeader from '../../components/detail/diet-detail-header';
 import {
   DietSeperateTray,
@@ -21,7 +24,7 @@ import { SeparatedFlag } from '@/types';
 import { useRouter } from 'next/navigation';
 import DietShowNutrition from '../../components/detail/diet-show-nutrition';
 import { MixIcon } from '@radix-ui/react-icons';
-import { Plus, Utensils } from 'lucide-react';
+import { Download, Plus, Utensils } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ClientFooter from '@/components/layout/client/client-footer';
 import { checkTokenExisted } from '@/utils';
@@ -44,6 +47,8 @@ const DietDetail = ({ params }: DietDetailProps) => {
 
   const [isPendingAll, startTransitionAll] = useTransition();
   const { mutateAsync: mutateAllergenCheckFood } = useAllergenCheckFood();
+  const { mutateAsync: mutateDownloadDietExcel, isPending: isDownloadingExcel } =
+    useDownloadDietExcel(params.dietId);
   const { mutateAsync: mutateSaveExcludedAllergen } = useSaveExcludedAllergen(
     params.dietId
   );
@@ -241,12 +246,22 @@ const DietDetail = ({ params }: DietDetailProps) => {
                     />
                   </PopoverContent>
                 </Popover> */}
+
                 <button
                   className="flex w-fit items-center space-x-2 rounded-md bg-primary px-4 py-2 text-white"
                   onClick={() => goToRoute('diet-details')}
                 >
                   <Utensils className="h-4 w-4" />
                   <span>식단 상세</span>
+                </button>
+                  
+                <button
+                  className="flex items-center space-x-2 rounded-md border border-primary bg-white px-4 py-2 font-bold text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={() => mutateDownloadDietExcel()}
+                  disabled={isDownloadingExcel}
+                >
+                  <Download className="h-4 w-4" />
+                  <span>{isDownloadingExcel ? '다운로드 중...' : '엑셀 다운로드'}</span>
                 </button>
               </div>
             </div>

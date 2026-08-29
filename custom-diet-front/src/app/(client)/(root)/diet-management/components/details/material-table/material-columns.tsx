@@ -5,7 +5,6 @@ import EyeWeightCell from './eye-weight-celll';
 import WeightCell from './weight-cell';
 
 export const MATERIAL_ACCESSOR_KEYS = {
-  ORIGINAL_CODE: 'originalCode',
   NAME: 'name',
   RECIPE_WEIGHT: 'recipeWeight',
   EYE_REFERENCE_WEIGHT: 'eyeReferenceWeight',
@@ -13,15 +12,6 @@ export const MATERIAL_ACCESSOR_KEYS = {
 } as const;
 
 export const materialColumns: ColumnDef<Material>[] = [
-  {
-    accessorKey: 'originalCode',
-    header: '식품코드',
-    cell: ({ row }) => {
-      const value: string = row.getValue('originalCode');
-      return <span className="block text-left md:text-center">{value}</span>;
-    },
-    size: 400
-  },
   {
     accessorKey: 'name',
     header: '식품명',

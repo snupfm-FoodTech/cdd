@@ -35,11 +35,11 @@ const BusinessSolutionContentPage = () => {
         image={`${BASE_PATH}/img/bg-knowledge.png`}
         content={content}
       />
-      <div className="section-padding my-4 flex flex-col gap-6">
-        <div className="w-fit">
+      <div className="section-padding my-6 flex flex-col gap-6 bg-muted/40 py-8">
+        <div className="mx-auto w-full max-w-3xl">
           <Link
             href={`${BUSINESS_SOLUTION_URL}?typeId=${typeId}` || '#'}
-            className="flex items-center gap-4 text-xl font-bold"
+            className="flex w-fit items-center gap-4 text-xl font-bold"
           >
             <div>
               <Icons.arrowLeft />
@@ -49,12 +49,14 @@ const BusinessSolutionContentPage = () => {
         </div>
 
         {content.description ? (
-          <RichTextViewer
-            value={content.description}
-            className="prose max-w-none"
-          />
+          <div className="mx-auto w-full max-w-3xl rounded-2xl border bg-white p-6 shadow-sm sm:p-10">
+            <RichTextViewer
+              value={content.description}
+              className="max-w-none [&_h2]:mt-10 [&_h3]:mt-8 [&_hr]:my-8 [&_li]:leading-7 [&_ul]:my-2 [&_ul]:space-y-1.5"
+            />
+          </div>
         ) : (
-          <div className="rounded-xl border border-primary/30 bg-primary/10 p-4">
+          <div className="mx-auto w-full max-w-3xl rounded-xl border border-primary/30 bg-primary/10 p-4">
             <div className="mb-2 text-base font-semibold text-primary">
               내용이 없습니다.
             </div>

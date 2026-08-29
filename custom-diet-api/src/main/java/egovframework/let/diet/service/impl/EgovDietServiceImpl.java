@@ -12,6 +12,7 @@ import egovframework.let.diet.dto.*;
 import egovframework.let.diet.entity.*;
 import egovframework.let.diet.param.*;
 import egovframework.let.diet.service.EgovDietService;
+import egovframework.let.diet.util.DietExcelExporter;
 import egovframework.let.role.RoleDAO;
 import egovframework.let.role.RoleEntity;
 import lombok.RequiredArgsConstructor;
@@ -581,7 +582,7 @@ public class EgovDietServiceImpl extends EgovAbstractServiceImpl implements Egov
         } else if (param.getExcludedAllergenIds() != null && // allergen param is not null meaning they want to change it
                 !compareTwoListOfInt(param.getExcludedAllergenIds(), excludedAllergenIds)) { // and the allergen data has changed
             removeFdFlg = true;
-        } else if ("SD00000008".equals(stdCd)) { // the standard that they choose is SD00000008
+        } else if ("SD00000008".equals(stdCd) || "SD00000011".equals(stdCd)) { // standards with no recipe templates
             removeFdFlg = true;
         }
 
@@ -873,9 +874,10 @@ public class EgovDietServiceImpl extends EgovAbstractServiceImpl implements Egov
         List<Integer> excludedAllergenIds = diet.getExcludedAllergens().stream().map(alrg -> alrg.getId()).toList();
 
         if ((recFoods == null || recFoods.isEmpty()) && standardCode != null
-                && !USR_STD_CD.equals(standardCode) && !"SD00000008".equals(standardCode)) {
+                && !USR_STD_CD.equals(standardCode) && !"SD00000008".equals(standardCode)
+                && !"SD00000011".equals(standardCode)) {
             // if default search failed => try to find with custom.
-            // This feature is used for only with default nutrition standards except SD00000008 (v2 requirement)
+            // This feature is used for only with default nutrition standards except SD00000008 and SD00000011 (no recipe templates)
             List<CustomRecFoodDto> params = new ArrayList<>();
             for (int i = 0; i < tray.getFoods().size(); i++) {
                 CustomRecFoodDto param = CustomRecFoodDto.builder()
@@ -919,10 +921,11 @@ public class EgovDietServiceImpl extends EgovAbstractServiceImpl implements Egov
             }
         } else {
             defaultFlag = true;
-            // USR 또는 SD00000008 기준의 경우 기본 추천 음식이 없을 수 있음
+            // USR, SD00000008, SD00000011 기준의 경우 기본 추천 음식이 없을 수 있음
             // 해당 기준에서 추천 음식이 없으면 빈 음식 슬롯 상태 그대로 반환
             if ((recFoods == null || recFoods.isEmpty())
-                    && (USR_STD_CD.equals(standardCode) || "SD00000008".equals(standardCode))) {
+                    && (USR_STD_CD.equals(standardCode) || "SD00000008".equals(standardCode)
+                        || "SD00000011".equals(standardCode))) {
                 return diet;
             }
         }
@@ -1398,6 +1401,78 @@ public class EgovDietServiceImpl extends EgovAbstractServiceImpl implements Egov
         validateAllergenId(excludedAllergenIds);
 
         return dietDAO.findAllFood(limit, keyword, fdTpCd, excludedAllergenIds);
+    }
+
+    @Override
+    public PagingWrapperDto findAllFoodWithPaging(Integer page, Integer limit, String keyword, String fdTpCd, String matCd, List<Integer> excludedAllergenIds) {
+        if (fdTpCd != null) {
+            validateFoodTypeCode(List.of(fdTpCd));
+        }
+        if (matCd != null && !matCd.isBlank()) {
+            validateMaterialCode(List.of(matCd));
+        }
+        validateAllergenId(excludedAllergenIds);
+
+        Integer[] arr = AppUtil.convertPageAndLimit(page, limit);
+
+        FindAllFoodParam param = FindAllFoodParam.builder()
+                .offset(arr[0])
+                .limit(arr[1])
+                .keyword(keyword)
+                .fdTpCd(fdTpCd)
+                .matCd(matCd)
+                .excludedAllergenIds(excludedAllergenIds)
+                .build();
+        List<DietFoodDto> foodList = dietDAO.findAllFoodWithPaging(param);
+
+        int totalPageNo = 1;
+        if (arr[1] != null && !foodList.isEmpty() && foodList.get(0).getTotalRecordNo() > arr[1]) {
+            totalPageNo = (int) Math.ceil((double) foodList.get(0).getTotalRecordNo() / arr[1]);
+        }
+        int totalRecordNo = foodList.isEmpty() ? 0 : foodList.get(0).getTotalRecordNo();
+        foodList.forEach(food -> food.setTotalRecordNo(null));
+
+        return PagingWrapperDto.builder()
+                .items(foodList)
+                .totalPageNo(totalPageNo)
+                .totalRecordNo(totalRecordNo)
+                .build();
+    }
+
+    @Override
+    public PagingWrapperDto findMyFoodsWithPaging(Integer page, Integer limit, String keyword, String fdTpCd, String matCd) {
+        if (fdTpCd != null) {
+            validateFoodTypeCode(List.of(fdTpCd));
+        }
+        if (matCd != null && !matCd.isBlank()) {
+            validateMaterialCode(List.of(matCd));
+        }
+
+        int usrId = AppUtil.getUserIdFromToken();
+        Integer[] arr = AppUtil.convertPageAndLimit(page, limit);
+
+        FindMyFoodsParam param = FindMyFoodsParam.builder()
+                .offset(arr[0])
+                .limit(arr[1])
+                .keyword(keyword)
+                .fdTpCd(fdTpCd)
+                .matCd(matCd)
+                .usrId(usrId)
+                .build();
+        List<DietFoodDto> foodList = dietDAO.findMyFoodsWithPaging(param);
+
+        int totalPageNo = 1;
+        if (arr[1] != null && !foodList.isEmpty() && foodList.get(0).getTotalRecordNo() > arr[1]) {
+            totalPageNo = (int) Math.ceil((double) foodList.get(0).getTotalRecordNo() / arr[1]);
+        }
+        int totalRecordNo = foodList.isEmpty() ? 0 : foodList.get(0).getTotalRecordNo();
+        foodList.forEach(food -> food.setTotalRecordNo(null));
+
+        return PagingWrapperDto.builder()
+                .items(foodList)
+                .totalPageNo(totalPageNo)
+                .totalRecordNo(totalRecordNo)
+                .build();
     }
 
     @Override
@@ -2039,6 +2114,28 @@ public class EgovDietServiceImpl extends EgovAbstractServiceImpl implements Egov
         return dietDAO.findDietNutritionSummary(dietId);
     }
 
+    @Override
+    public byte[] exportDietToExcel(int dietId) {
+        DietDetailDto diet = findDietDetailById(dietId);
+        List<DietNutritionSummaryDto> summaries = dietDAO.findDietNutritionSummary(dietId);
+        Map<Integer, List<DietNutritionSummaryDto>> summariesMap = new HashMap<>();
+        summariesMap.put(dietId, summaries);
+        return DietExcelExporter.export(List.of(diet), summariesMap);
+    }
+
+    @Override
+    public byte[] exportDietsToExcel(List<Integer> dietIds) {
+        List<DietDetailDto> diets = new ArrayList<>();
+        Map<Integer, List<DietNutritionSummaryDto>> summariesMap = new HashMap<>();
+        for (Integer dietId : dietIds) {
+            DietDetailDto diet = findDietDetailById(dietId);
+            diets.add(diet);
+            summariesMap.put(dietId, dietDAO.findDietNutritionSummary(dietId));
+        }
+        return DietExcelExporter.export(diets, summariesMap);
+    }
+
+
     @Transactional
     @Override
     public List<DietNutritionSummaryDto> addNutritionSummaryToDiet(int dietId,
@@ -2144,6 +2241,124 @@ public class EgovDietServiceImpl extends EgovAbstractServiceImpl implements Egov
             dietDAO.updateUserFood(sqlParams);
         }
     }
+
+    @Override
+    @Transactional
+    public DietFoodDto createRecipe(SaveRecipeParam param) {
+        int userId = AppUtil.getUserIdFromToken();
+
+        validateRecipeParam(param);
+
+        FoodEntity food = FoodEntity.builder()
+                .fdNm(param.getName().trim())
+                .fdTpCd(param.getTypeCode())
+                .fdRcpDesc(param.getRecipeDescription())
+                .ownUsrId(userId)
+                .build();
+        dietDAO.addUserRecipe(food);
+
+        dietDAO.addRecipeMaterials(toRecipeMaterials(food.getFdCd(), param));
+        dietDAO.upsertFoodNutritionByFdCd(food.getFdCd());
+
+        // 소유 기록을 남겨야 My Recipe 목록과 식단 설계의 음식 검색(내 음식 그룹)에 노출된다
+        dietDAO.saveUserFood(UserFoodEntity.builder()
+                .usrId(userId)
+                .fdCd(food.getFdCd())
+                .fdNm(food.getFdNm())
+                .fdRcpDesc(food.getFdRcpDesc())
+                .build());
+
+        return dietDAO.findFoodByFdCd(food.getFdCd());
+    }
+
+    @Override
+    @Transactional
+    public DietFoodDto updateRecipe(String fdCd, SaveRecipeParam param) {
+        int userId = AppUtil.getUserIdFromToken();
+
+        FoodEntity recipe = findOwnedRecipe(fdCd, userId);
+        validateRecipeParam(param);
+
+        recipe.setFdNm(param.getName().trim());
+        recipe.setFdTpCd(param.getTypeCode());
+        recipe.setFdRcpDesc(param.getRecipeDescription());
+        dietDAO.updateUserRecipe(recipe);
+
+        // 재료 구성은 통째로 교체한 뒤 집계 영양성분을 다시 계산한다
+        dietDAO.deleteRecipeMaterials(fdCd);
+        dietDAO.addRecipeMaterials(toRecipeMaterials(fdCd, param));
+        dietDAO.upsertFoodNutritionByFdCd(fdCd);
+
+        dietDAO.updateUserFood(UserFoodEntity.builder()
+                .usrId(userId)
+                .fdCd(fdCd)
+                .fdNm(recipe.getFdNm())
+                .fdRcpDesc(recipe.getFdRcpDesc())
+                .build());
+
+        return dietDAO.findFoodByFdCd(fdCd);
+    }
+
+    @Override
+    @Transactional
+    public void deleteRecipe(String fdCd) {
+        int userId = AppUtil.getUserIdFromToken();
+
+        findOwnedRecipe(fdCd, userId);
+
+        // diet_tray_dtl_mgmt 의 FK 가 ON DELETE CASCADE 라, 사용 중인 레시피를 지우면
+        // 저장된 식단에서 조용히 사라진다. 그래서 사용 중이면 삭제를 막는다.
+        if (dietDAO.checkUserRecipeInUse(fdCd)) {
+            throw new ValidationException(messageService.get("diet-rcp.in-use"));
+        }
+
+        // mst_fd_nutr 의 FK 에는 cascade 가 없어 먼저 지워야 한다.
+        // tmpl_fd 와 usr_fd_mgmt 는 mst_fd 삭제 시 cascade 된다.
+        dietDAO.deleteFoodNutrition(fdCd);
+        dietDAO.deleteUserRecipe(fdCd, userId);
+    }
+
+    private FoodEntity findOwnedRecipe(String fdCd, int userId) {
+        FoodEntity recipe = dietDAO.findUserRecipeByFdCd(fdCd)
+                .orElseThrow(() -> new CustomNotFoundException(messageService.get("diet-rcp.not-found", fdCd)));
+
+        if (!Integer.valueOf(userId).equals(recipe.getOwnUsrId())) {
+            throw new CustomAuthorizationException(messageService.get("diet-rcp.forbidden"));
+        }
+
+        return recipe;
+    }
+
+    private void validateRecipeParam(SaveRecipeParam param) {
+        validateFoodTypeCode(List.of(param.getTypeCode()));
+
+        List<String> matCds = param.getMaterials().stream()
+                .map(SaveRecipeMaterialParam::getCode)
+                .toList();
+        validateMaterialCode(matCds);
+
+        List<String> duplicated = matCds.stream()
+                .filter(code -> Collections.frequency(matCds, code) > 1)
+                .distinct()
+                .toList();
+        if (!duplicated.isEmpty()) {
+            throw new ValidationException(messageService.get("diet-rcp.mat-code.duplicated", duplicated.toString()));
+        }
+    }
+
+    private List<TemplateFoodEntity> toRecipeMaterials(String fdCd, SaveRecipeParam param) {
+        return param.getMaterials().stream()
+                .map(mat -> TemplateFoodEntity.builder()
+                        .tmplFdCd(fdCd)
+                        .tmplMatCd(mat.getCode())
+                        .tmplMatRcpWgt(BigDecimal.valueOf(mat.getRecipeWeight()))
+                        .tmplMatCalcWgt(BigDecimal.valueOf(mat.getCalculationWeight() != null
+                                ? mat.getCalculationWeight()
+                                : mat.getRecipeWeight()))
+                        .build())
+                .collect(Collectors.toList());
+    }
+
 
     @Override
     public List<DietAllergenDto> getAllAllergen() {

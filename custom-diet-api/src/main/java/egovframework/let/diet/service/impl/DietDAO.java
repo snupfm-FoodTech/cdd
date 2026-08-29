@@ -38,13 +38,17 @@ import egovframework.let.diet.entity.DietStandardDetailEntity;
 import egovframework.let.diet.entity.DietTrayDetailEntity;
 import egovframework.let.diet.entity.MaterialEntity;
 import egovframework.let.diet.entity.TemplateMaterialEntity;
+import egovframework.let.diet.entity.FoodEntity;
+import egovframework.let.diet.entity.TemplateFoodEntity;
 import egovframework.let.diet.entity.UserFoodEntity;
 import egovframework.let.diet.entity.UserTrayDetailEntity;
 import egovframework.let.diet.entity.UserTrayEntity;
 import egovframework.let.diet.dto.MyMaterialDto;
 import egovframework.let.diet.param.CheckAllergenFoodMaterialParam;
 import egovframework.let.diet.param.FindAllDietParam;
+import egovframework.let.diet.param.FindAllFoodParam;
 import egovframework.let.diet.param.FindAllMaterialParam;
+import egovframework.let.diet.param.FindMyFoodsParam;
 import egovframework.let.diet.param.FindMyMaterialsParam;
 
 
@@ -239,7 +243,31 @@ public class DietDAO extends EgovAbstractMapper {
 		
 		return selectList("DietDAO.findAllFood", param);
 	}
-	
+
+	public List<DietFoodDto> findAllFoodWithPaging(FindAllFoodParam param) {
+		Map<String, Object> sqlParams = new HashMap<>();
+		sqlParams.put("offset", param.getOffset());
+		sqlParams.put("limit", param.getLimit());
+		sqlParams.put("keyword", param.getKeyword());
+		sqlParams.put("fdTpCd", param.getFdTpCd());
+		sqlParams.put("matCd", param.getMatCd());
+		sqlParams.put("excludedAllergenIds", param.getExcludedAllergenIds());
+
+		return selectList("DietDAO.findAllFoodWithPaging", sqlParams);
+	}
+
+	public List<DietFoodDto> findMyFoodsWithPaging(FindMyFoodsParam param) {
+		Map<String, Object> sqlParams = new HashMap<>();
+		sqlParams.put("offset", param.getOffset());
+		sqlParams.put("limit", param.getLimit());
+		sqlParams.put("keyword", param.getKeyword());
+		sqlParams.put("fdTpCd", param.getFdTpCd());
+		sqlParams.put("matCd", param.getMatCd());
+		sqlParams.put("usrId", param.getUsrId());
+
+		return selectList("DietDAO.findMyFoodsWithPaging", sqlParams);
+	}
+
 	public List<DietFoodDto> recommendFood(int limit, String fdCd, String fdTpCd, List<String> excludedFdCds, List<Integer> excludedAllergenIds) {
 		Map<String, Object> param = new HashMap<>();
 		param.put("limit", limit);
@@ -335,6 +363,54 @@ public class DietDAO extends EgovAbstractMapper {
 	public void updateUserFood(UserFoodEntity entity){
 		update("DietDAO.updateUserFood", entity);
 	};
+
+
+	//user recipes (사용자가 재료까지 직접 구성해 만든 음식)
+	public void addUserRecipe(FoodEntity entity) {
+		insert("DietDAO.addUserRecipe", entity);
+	}
+
+	public Optional<FoodEntity> findUserRecipeByFdCd(String fdCd) {
+		return Optional.ofNullable(selectOne("DietDAO.findUserRecipeByFdCd", fdCd));
+	}
+
+	public void updateUserRecipe(FoodEntity entity) {
+		update("DietDAO.updateUserRecipe", entity);
+	}
+
+	public void deleteUserRecipe(String fdCd, int ownUsrId) {
+		Map<String, Object> param = new HashMap<>();
+		param.put("fdCd", fdCd);
+		param.put("ownUsrId", ownUsrId);
+		delete("DietDAO.deleteUserRecipe", param);
+	}
+
+	public boolean checkUserRecipeInUse(String fdCd) {
+		return selectOne("DietDAO.checkUserRecipeInUse", fdCd);
+	}
+
+	public void addRecipeMaterials(List<TemplateFoodEntity> materials) {
+		insert("DietDAO.addRecipeMaterials", materials);
+	}
+
+	public void deleteRecipeMaterials(String fdCd) {
+		delete("DietDAO.deleteRecipeMaterials", fdCd);
+	}
+
+	public void deleteFoodNutrition(String fdCd) {
+		delete("DietDAO.deleteFoodNutrition", fdCd);
+	}
+
+	public void deleteUserFood(int usrId, String fdCd) {
+		Map<String, Object> param = new HashMap<>();
+		param.put("usrId", usrId);
+		param.put("fdCd", fdCd);
+		delete("DietDAO.deleteUserFood", param);
+	}
+
+	public void upsertFoodNutritionByFdCd(String fdCd) {
+		insert("DietDAO.upsertFoodNutritionByFdCd", fdCd);
+	}
 
 	//materials	
 	public List<DietMaterialDto> findAllMaterial(FindAllMaterialParam param) {

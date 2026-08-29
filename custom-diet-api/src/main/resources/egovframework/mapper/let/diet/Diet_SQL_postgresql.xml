@@ -58,7 +58,9 @@
         <result property="typeCode" column="fd_tp_cd"/>
         <result property="typeName" column="fd_tp_nm"/>
         <result property="recipeDescription" column="fd_rcp_desc"/>
+        <result property="ownFlag" column="own_flg"/>
         <result property="materials" column="materials" typeHandler="egovframework.let.diet.type_handler.ListDietMaterialTypeHandler"/>
+        <result property="totalRecordNo" column="total_record_no"/>
     </resultMap>
     
     <resultMap id = "diet_food_nutrition_dto" type="egovframework.let.diet.dto.DietFoodNutritionDto">
@@ -199,6 +201,14 @@
     	<result property="creDt" column="cre_dt"/>
     	<result property="updUsrId" column="upd_usr_id"/>
         <result property="updDt" column="upd_dt"/>
+    </resultMap>
+    
+    <resultMap id = "food_entity" type="egovframework.let.diet.entity.FoodEntity">
+    	<id property="fdCd" column="fd_cd"/>
+    	<result property="fdNm" column="fd_nm"/>
+    	<result property="fdTpCd" column="fd_tp_cd"/>
+    	<result property="fdRcpDesc" column="fd_rcp_desc"/>
+    	<result property="ownUsrId" column="own_usr_id"/>
     </resultMap>
     
     <resultMap id = "diet_allergen_dto" type="egovframework.let.diet.dto.DietAllergenDto">
@@ -1226,6 +1236,7 @@
 		                                WHERE
 		                                    1 = 1
 		                                    AND fd_tp_cd = #{item.typeCode}
+		                                    AND fd_cd NOT IN (SELECT fd_cd FROM mst_fd WHERE own_usr_id IS NOT NULL)
 		                                    AND ENG &lt;= 800.0 * ${ratio}
 		                                    AND NA &lt;= 1350.0 * ${ratio}
 											<if test="excludedAllergenIds != null and !excludedAllergenIds.isEmpty()">
@@ -1259,6 +1270,7 @@
 		                            WHERE
 		                                1 = 1
 		                                AND fd_tp_cd = #{item.typeCode}
+		                                AND fd_cd NOT IN (SELECT fd_cd FROM mst_fd WHERE own_usr_id IS NOT NULL)
 		                                AND ENG &lt;= 800.0 * ${ratio}
 		                                AND NA &lt;= 1350.0 * ${ratio}
 										<if test="excludedAllergenIds != null and !excludedAllergenIds.isEmpty()">
@@ -1333,6 +1345,7 @@
 		                                WHERE
 		                                    1 = 1
 		                                    AND fd_tp_cd = #{item.typeCode}
+		                                    AND fd_cd NOT IN (SELECT fd_cd FROM mst_fd WHERE own_usr_id IS NOT NULL)
 		                                    AND ENG &lt;= 800.0 * ${ratio}
 		                                    AND NA &lt;= 650.0 * ${ratio}
 											<if test="excludedAllergenIds != null and !excludedAllergenIds.isEmpty()">
@@ -1364,6 +1377,7 @@
 		                            WHERE
 		                                1 = 1
 		                                AND fd_tp_cd = #{item.typeCode}
+		                                AND fd_cd NOT IN (SELECT fd_cd FROM mst_fd WHERE own_usr_id IS NOT NULL)
 		                                AND ENG &lt;= 800.0 * ${ratio}
 		                                AND NA &lt;= 650.0 * ${ratio}
 										<if test="excludedAllergenIds != null and !excludedAllergenIds.isEmpty()">
@@ -1444,6 +1458,7 @@
 		                                WHERE
 		                                    1 = 1
 		                                    AND fd_tp_cd = #{item.typeCode}
+		                                    AND fd_cd NOT IN (SELECT fd_cd FROM mst_fd WHERE own_usr_id IS NOT NULL)
 		                                    AND ENG &lt;= 800.0 * ${ratio}
 		                                    AND NA &lt;= 1350.0 * ${ratio}
 											<if test="excludedAllergenIds != null and !excludedAllergenIds.isEmpty()">
@@ -1478,6 +1493,7 @@
 		                            WHERE
 		                                1 = 1
 		                                AND fd_tp_cd = #{item.typeCode}
+		                                AND fd_cd NOT IN (SELECT fd_cd FROM mst_fd WHERE own_usr_id IS NOT NULL)
 		                                AND ENG &lt;= 800.0 * ${ratio}
 		                                AND NA &lt;= 1350.0 * ${ratio}
 										<if test="excludedAllergenIds != null and !excludedAllergenIds.isEmpty()">
@@ -1543,6 +1559,7 @@
 		                                WHERE
 		                                    1 = 1
 		                                    AND fd_tp_cd = #{item.typeCode}
+		                                    AND fd_cd NOT IN (SELECT fd_cd FROM mst_fd WHERE own_usr_id IS NOT NULL)
 		                                    AND sugar_calc_wgt_rto &lt; 5.0 / 100
 											<if test="excludedAllergenIds != null and !excludedAllergenIds.isEmpty()">
 											AND (
@@ -1569,6 +1586,7 @@
 		                            WHERE
 		                                1 = 1
 		                                AND fd_tp_cd = #{item.typeCode}
+		                                AND fd_cd NOT IN (SELECT fd_cd FROM mst_fd WHERE own_usr_id IS NOT NULL)
 		                                AND sugar_calc_wgt_rto &lt; 5.0 / 100
 										<if test="excludedAllergenIds != null and !excludedAllergenIds.isEmpty()">
 										AND (
@@ -1633,6 +1651,7 @@
 		                                WHERE
 		                                    1 = 1
 		                                    AND fd_tp_cd = #{item.typeCode}
+		                                    AND fd_cd NOT IN (SELECT fd_cd FROM mst_fd WHERE own_usr_id IS NOT NULL)
 		                                    AND na_calc_wgt_rto &lt; 120.0 / 100
 											<if test="excludedAllergenIds != null and !excludedAllergenIds.isEmpty()">
 											AND (
@@ -1659,6 +1678,7 @@
 		                            WHERE
 		                                1 = 1
 		                                AND fd_tp_cd = #{item.typeCode}
+		                                AND fd_cd NOT IN (SELECT fd_cd FROM mst_fd WHERE own_usr_id IS NOT NULL)
 		                                AND na_calc_wgt_rto &lt; 120.0 / 100
 										<if test="excludedAllergenIds != null and !excludedAllergenIds.isEmpty()">
 										AND (
@@ -1723,6 +1743,7 @@
 		                                WHERE
 		                                    1 = 1
 		                                    AND fd_tp_cd = #{item.typeCode}
+		                                    AND fd_cd NOT IN (SELECT fd_cd FROM mst_fd WHERE own_usr_id IS NOT NULL)
 		                                    AND protein_eng_rto &gt;= 5.5 / 100
 											<if test="excludedAllergenIds != null and !excludedAllergenIds.isEmpty()">
 											AND (
@@ -1749,6 +1770,7 @@
 		                            WHERE
 		                                1 = 1
 		                                AND fd_tp_cd = #{item.typeCode}
+		                                AND fd_cd NOT IN (SELECT fd_cd FROM mst_fd WHERE own_usr_id IS NOT NULL)
 		                                AND protein_eng_rto &gt;= 5.5 / 100
 										<if test="excludedAllergenIds != null and !excludedAllergenIds.isEmpty()">
 										AND (
@@ -1822,6 +1844,7 @@
 		                                WHERE
 		                                    1 = 1
 		                                    AND fd_tp_cd = #{item.typeCode}
+		                                    AND fd_cd NOT IN (SELECT fd_cd FROM mst_fd WHERE own_usr_id IS NOT NULL)
 		                                    AND ENG &lt;= 800.0 * ${ratio}
 		                                    AND NA &lt;= 650.0 * ${ratio}
 											<if test="excludedAllergenIds != null and !excludedAllergenIds.isEmpty()">
@@ -1853,6 +1876,7 @@
 		                            WHERE
 		                                1 = 1
 		                                AND fd_tp_cd = #{item.typeCode}
+		                                AND fd_cd NOT IN (SELECT fd_cd FROM mst_fd WHERE own_usr_id IS NOT NULL)
 		                                AND ENG &lt;= 800.0 * ${ratio}
 		                                AND NA &lt;= 650.0 * ${ratio}
 										<if test="excludedAllergenIds != null and !excludedAllergenIds.isEmpty()">
@@ -1933,6 +1957,7 @@
 		                                WHERE
 		                                    1 = 1
 		                                    AND fd_tp_cd = #{item.typeCode}
+		                                    AND fd_cd NOT IN (SELECT fd_cd FROM mst_fd WHERE own_usr_id IS NOT NULL)
 		                                    AND ENG &lt;= 800.0 * ${ratio}
 											<if test="excludedAllergenIds != null and !excludedAllergenIds.isEmpty()">
 											AND (
@@ -1966,6 +1991,7 @@
 		                            WHERE
 		                                1 = 1
 		                                AND fd_tp_cd = #{item.typeCode}
+		                                AND fd_cd NOT IN (SELECT fd_cd FROM mst_fd WHERE own_usr_id IS NOT NULL)
 		                                AND ENG &lt;= 800.0 * ${ratio}
 										<if test="excludedAllergenIds != null and !excludedAllergenIds.isEmpty()">
 										AND (
@@ -2048,6 +2074,7 @@
 		                                WHERE
 		                                    1 = 1
 		                                    AND fd_tp_cd = #{item.typeCode}
+		                                    AND fd_cd NOT IN (SELECT fd_cd FROM mst_fd WHERE own_usr_id IS NOT NULL)
 		                                    AND ENG &lt;= 600.0 * ${ratio}
 		                                    AND NA &lt;= 1000.0 * ${ratio}
 											<if test="excludedAllergenIds != null and !excludedAllergenIds.isEmpty()">
@@ -2083,6 +2110,7 @@
 		                            WHERE
 		                                1 = 1
 		                                AND fd_tp_cd = #{item.typeCode}
+		                                AND fd_cd NOT IN (SELECT fd_cd FROM mst_fd WHERE own_usr_id IS NOT NULL)
 		                                AND ENG &lt;= 600.0 * ${ratio}
 		                                AND NA &lt;= 1000.0 * ${ratio}
 										<if test="excludedAllergenIds != null and !excludedAllergenIds.isEmpty()">
@@ -2422,6 +2450,7 @@
 				AND fdtp.intg_cd_val_ctnt = a.fd_tp_cd
 			)
 			WHERE a.fd_cd = #{fdCd}
+			AND (a.own_usr_id IS NULL OR a.own_usr_id = #{usrId})
 			GROUP BY a.fd_cd, a.fd_nm, a.fd_tp_cd, a.fd_rcp_desc,
 				fdtp.intg_cd_dp_val_desc
 		) sub1
@@ -2461,6 +2490,7 @@
 				FROM mst_fd fd
 				INNER JOIN mst_fd_nutr fdnutr ON fd.fd_cd = fdnutr.fd_cd 
 				WHERE 1 = 1
+				AND fd.own_usr_id IS NULL
 				<if test="excludedAllergenIds != null and !excludedAllergenIds.isEmpty()">
 						AND (
 						fdnutr.alrg_ids IS NULL 
@@ -2491,7 +2521,108 @@
 		</if>
 		LIMIT ${limit}
 	</select>
-    
+
+    <select id="findAllFoodWithPaging" resultMap="diet_food_dto">
+		SELECT
+			fd_cd, fd_nm, fd_tp_cd, fd_tp_nm, fd_rcp_desc, total_record_no
+		FROM (
+			SELECT
+				fd.fd_cd,
+				fd.fd_nm,
+				fd.fd_tp_cd,
+				fdtp.intg_cd_dp_val_desc AS fd_tp_nm,
+				fd.fd_rcp_desc,
+				count(*) OVER() AS total_record_no
+			FROM mst_fd fd
+			INNER JOIN mst_fd_nutr fdnutr ON fd.fd_cd = fdnutr.fd_cd
+			LEFT OUTER JOIN com_intg_cd_dtl fdtp ON (
+				fdtp.intg_cd = 'CD00013'
+				AND fdtp.intg_cd_val_ctnt = fd.fd_tp_cd
+			)
+			WHERE 1 = 1
+				AND fd.own_usr_id IS NULL
+			<if test="fdTpCd != null and fdTpCd != ''">
+				AND fd.fd_tp_cd = #{fdTpCd}
+			</if>
+			<if test="excludedAllergenIds != null and !excludedAllergenIds.isEmpty()">
+				AND (
+					fdnutr.alrg_ids IS NULL
+					OR NOT (
+						fdnutr.alrg_ids &amp;&amp; #{excludedAllergenIds,
+										jdbcType=ARRAY,
+										javaType=java.util.List,
+										typeHandler=egovframework.com.config.mybatis.JdbcArrayAndJavaListTypeHandler}
+					)
+				)
+			</if>
+			<if test="keyword != null and keyword != ''">
+			<bind name="keyword" value="'%' + keyword.trim().toUpperCase() + '%'" />
+				AND UPPER(fd.fd_nm) LIKE #{keyword}
+			</if>
+			<if test="matCd != null and matCd != ''">
+				AND EXISTS (
+					SELECT 1
+					FROM tmpl_fd tf
+					WHERE tf.tmpl_fd_cd = fd.fd_cd
+					AND tf.tmpl_mat_cd = #{matCd}
+				)
+			</if>
+		) sub
+		ORDER BY fd_nm COLLATE "ko-KR-x-icu"
+		<if test="offset != null">
+		OFFSET #{offset}
+		</if>
+		<if test="limit != null">
+		LIMIT #{limit}
+		</if>
+    </select>
+
+    <select id="findMyFoodsWithPaging" resultMap="diet_food_dto">
+		SELECT
+			fd_cd, fd_nm, fd_tp_cd, fd_tp_nm, fd_rcp_desc, own_flg, total_record_no
+		FROM (
+			SELECT
+				usr.fd_cd,
+				usr.fd_nm,
+				fd.fd_tp_cd,
+				fdtp.intg_cd_dp_val_desc AS fd_tp_nm,
+				usr.fd_rcp_desc,
+				usr.upd_dt,
+				usr.cre_dt,
+				CASE WHEN fd.own_usr_id IS NULL THEN 'N' ELSE 'Y' END AS own_flg,
+				count(*) OVER() AS total_record_no
+			FROM usr_fd_mgmt usr
+			INNER JOIN mst_fd fd ON usr.fd_cd = fd.fd_cd
+			LEFT OUTER JOIN com_intg_cd_dtl fdtp ON (
+				fdtp.intg_cd = 'CD00013'
+				AND fdtp.intg_cd_val_ctnt = fd.fd_tp_cd
+			)
+			WHERE usr.usr_id = #{usrId}
+			<if test="fdTpCd != null and fdTpCd != ''">
+				AND fd.fd_tp_cd = #{fdTpCd}
+			</if>
+			<if test="keyword != null and keyword != ''">
+			<bind name="keyword" value="'%' + keyword.trim().toUpperCase() + '%'" />
+				AND UPPER(usr.fd_nm) LIKE #{keyword}
+			</if>
+			<if test="matCd != null and matCd != ''">
+				AND EXISTS (
+					SELECT 1
+					FROM tmpl_fd tf
+					WHERE tf.tmpl_fd_cd = usr.fd_cd
+					AND tf.tmpl_mat_cd = #{matCd}
+				)
+			</if>
+		) sub
+		ORDER BY COALESCE(upd_dt, cre_dt) DESC
+		<if test="offset != null">
+		OFFSET #{offset}
+		</if>
+		<if test="limit != null">
+		LIMIT #{limit}
+		</if>
+    </select>
+
     <select id="recommendFood" resultMap="diet_food_dto">
 		SELECT
 			rec.recommend_fd_cd AS fd_cd,
@@ -2534,6 +2665,7 @@
 		INNER JOIN mst_fd_nutr fdnutr
 			ON fdnutr.fd_cd = fd.fd_cd
 		WHERE fd.fd_tp_cd = #{fdTpCd}
+		AND fd.own_usr_id IS NULL
 		<if test="excludedAllergenIds != null and !excludedAllergenIds.isEmpty()">
 			AND (
 				fdnutr.alrg_ids IS NULL
@@ -3370,4 +3502,341 @@
 		) sub1
 		GROUP BY fd_cd
 	</select>
+
+    <!-- ================= 사용자 레시피 (사용자가 직접 만든 음식) ================= -->
+
+    <insert id="addUserRecipe" useGeneratedKeys="true" keyProperty="fdCd" keyColumn="fd_cd">
+    	INSERT INTO mst_fd (fd_nm, fd_tp_cd, fd_rcp_desc, own_usr_id)
+    	VALUES (#{fdNm}, #{fdTpCd}, #{fdRcpDesc}, #{ownUsrId})
+    </insert>
+
+    <select id="findUserRecipeByFdCd" resultMap="food_entity">
+    	SELECT fd_cd, fd_nm, fd_tp_cd, fd_rcp_desc, own_usr_id
+    	FROM mst_fd
+    	WHERE fd_cd = #{fdCd}
+    	AND own_usr_id IS NOT NULL
+    </select>
+
+    <update id="updateUserRecipe">
+    	UPDATE mst_fd
+    	SET fd_nm = #{fdNm},
+    		fd_tp_cd = #{fdTpCd},
+    		fd_rcp_desc = #{fdRcpDesc}
+    	WHERE fd_cd = #{fdCd}
+    	AND own_usr_id = #{ownUsrId}
+    </update>
+
+    <delete id="deleteUserRecipe">
+    	DELETE FROM mst_fd
+    	WHERE fd_cd = #{fdCd}
+    	AND own_usr_id = #{ownUsrId}
+    </delete>
+
+    <!-- 저장된 식단이 참조 중이면 삭제를 막는다 (diet_tray_dtl_mgmt 의 FK 는 ON DELETE CASCADE 라 조용히 지워진다) -->
+    <select id="checkUserRecipeInUse" resultType="boolean">
+    	SELECT EXISTS (
+    		SELECT 1
+    		FROM diet_tray_dtl_mgmt
+    		WHERE fd_cd = #{fdCd}
+    	)
+    </select>
+
+    <insert id="addRecipeMaterials">
+    	INSERT INTO tmpl_fd (tmpl_fd_cd, tmpl_mat_cd, tmpl_mat_rcp_wgt, tmpl_mat_calc_wgt)
+    	VALUES
+    	<foreach collection="list" item="item" separator=",">
+    		(#{item.tmplFdCd}, #{item.tmplMatCd}, #{item.tmplMatRcpWgt}, #{item.tmplMatCalcWgt})
+    	</foreach>
+    </insert>
+
+    <delete id="deleteRecipeMaterials">
+    	DELETE FROM tmpl_fd
+    	WHERE tmpl_fd_cd = #{fdCd}
+    </delete>
+
+    <delete id="deleteFoodNutrition">
+    	DELETE FROM mst_fd_nutr
+    	WHERE fd_cd = #{fdCd}
+    </delete>
+
+    <delete id="deleteUserFood">
+    	DELETE FROM usr_fd_mgmt
+    	WHERE usr_id = #{usrId}
+    	AND fd_cd = #{fdCd}
+    </delete>
+
+    <!-- 재료 구성이 바뀐 음식 하나의 집계 영양성분을 다시 계산해 저장한다.
+         계산식은 findFoodNutritionDataForUpsert 와 동일하며, 대상만 fd_cd 하나로 좁혔다. -->
+    <insert id="upsertFoodNutritionByFdCd">
+    	INSERT INTO mst_fd_nutr (
+    		fd_cd, fd_tp_cd, ttl_rcp_wgt, ttl_calc_wgt,
+    		eng, protein, fat, cho, sugar, fiber, ca, fe, p, k, na, vita, reti, caro, thia, ribo, niacin, vitc, chole, sfa, trans, mois, ash, vitd,
+    		sugar_calc_wgt_rto, na_calc_wgt_rto, eng_calc_wgt_rto, protein_eng_rto, alrg_ids)
+    	SELECT
+    		agg.fd_cd,
+    		agg.fd_tp_cd,
+    		agg.ttl_rcp_wgt,
+    		agg.ttl_calc_wgt,
+    		agg.eng,
+    		agg.protein,
+    		agg.fat,
+    		agg.cho,
+    		agg.sugar,
+    		agg.fiber,
+    		agg.ca,
+    		agg.fe,
+    		agg.p,
+    		agg.k,
+    		agg.na,
+    		agg.vita,
+    		agg.reti,
+    		agg.caro,
+    		agg.thia,
+    		agg.ribo,
+    		agg.niacin,
+    		agg.vitc,
+    		agg.chole,
+    		agg.sfa,
+    		agg.trans,
+    		agg.mois,
+    		agg.ash,
+    		agg.vitd,
+    		agg.sugar / (CASE WHEN agg.ttl_calc_wgt = 0 THEN NULL ELSE agg.ttl_calc_wgt END),
+    		agg.na / (CASE WHEN agg.ttl_calc_wgt = 0 THEN NULL ELSE agg.ttl_calc_wgt END),
+    		agg.eng / (CASE WHEN agg.ttl_calc_wgt = 0 THEN NULL ELSE agg.ttl_calc_wgt END),
+    		agg.protein / (CASE WHEN agg.eng = 0 THEN NULL ELSE agg.eng END),
+    		(
+    			SELECT ARRAY_AGG(DISTINCT matalrg.alrg_id ORDER BY matalrg.alrg_id)
+    			FROM tmpl_fd tmplfd
+    			INNER JOIN tmpl_mat_alrg matalrg ON tmplfd.tmpl_mat_cd = matalrg.mat_cd
+    			WHERE tmplfd.tmpl_fd_cd = agg.fd_cd
+    		)
+    	FROM (
+    		SELECT
+    			sub.fd_cd,
+    			sub.fd_tp_cd,
+    			COALESCE(sum(sub.tmpl_mat_rcp_wgt), 0) AS ttl_rcp_wgt,
+    			COALESCE(sum(sub.tmpl_mat_calc_wgt), 0) AS ttl_calc_wgt,
+    			sum(sub.eng) AS eng,
+    			sum(sub.protein) AS protein,
+    			sum(sub.fat) AS fat,
+    			sum(sub.cho) AS cho,
+    			sum(sub.sugar) AS sugar,
+    			sum(sub.fiber) AS fiber,
+    			sum(sub.ca) AS ca,
+    			sum(sub.fe) AS fe,
+    			sum(sub.p) AS p,
+    			sum(sub.k) AS k,
+    			sum(sub.na) AS na,
+    			sum(sub.vita) AS vita,
+    			sum(sub.reti) AS reti,
+    			sum(sub.caro) AS caro,
+    			sum(sub.thia) AS thia,
+    			sum(sub.ribo) AS ribo,
+    			sum(sub.niacin) AS niacin,
+    			sum(sub.vitc) AS vitc,
+    			sum(sub.chole) AS chole,
+    			sum(sub.sfa) AS sfa,
+    			sum(sub.trans) AS trans,
+    			sum(sub.mois) AS mois,
+    			sum(sub.ash) AS ash,
+    			sum(sub.vitd) AS vitd
+    		FROM (
+    			SELECT
+    				fd.fd_cd,
+    				fd.fd_tp_cd,
+    				tmplfd.tmpl_mat_rcp_wgt,
+    				tmplfd.tmpl_mat_calc_wgt,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'ENG' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS eng,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'PROTEIN' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS protein,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'FAT' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS fat,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'CHO' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS cho,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'SUGAR' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS sugar,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'FIBER' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS fiber,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'CA' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS ca,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'FE' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS fe,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'P' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS p,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'K' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS k,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'NA' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS na,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'VITA' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS vita,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'RETI' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS reti,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'CARO' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS caro,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'THIA' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS thia,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'RIBO' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS ribo,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'NIACIN' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS niacin,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'VITC' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS vitc,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'CHOLE' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS chole,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'SFA' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS sfa,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'TRANS' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS trans,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'MOIS' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS mois,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'ASH' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS ash,
+    				sum(
+    					CASE
+    						WHEN tmplmat.tmpl_nutr_cd = 'VITD' THEN tmplfd.tmpl_mat_calc_wgt * tmplmat.tmpl_nutr_amt / tmplmat.tmpl_mat_wgt
+    						ELSE 0
+    					END
+    				) AS vitd
+    			FROM mst_fd fd
+    			LEFT OUTER JOIN tmpl_fd tmplfd ON fd.fd_cd = tmplfd.tmpl_fd_cd
+    			LEFT OUTER JOIN tmpl_mat tmplmat ON tmplfd.tmpl_mat_cd = tmplmat.tmpl_mat_cd
+    			WHERE fd.fd_cd = #{fdCd}
+    			GROUP BY
+    				fd.fd_cd,
+    				tmplfd.tmpl_mat_cd,
+    				tmplfd.tmpl_mat_rcp_wgt,
+    				tmplfd.tmpl_mat_calc_wgt
+    		) sub
+    		GROUP BY
+    			sub.fd_cd,
+    			sub.fd_tp_cd
+    	) agg
+    	ON CONFLICT (fd_cd) DO UPDATE SET
+    		fd_tp_cd = EXCLUDED.fd_tp_cd,
+    		ttl_rcp_wgt = EXCLUDED.ttl_rcp_wgt,
+    		ttl_calc_wgt = EXCLUDED.ttl_calc_wgt,
+    		eng = EXCLUDED.eng,
+    		protein = EXCLUDED.protein,
+    		fat = EXCLUDED.fat,
+    		cho = EXCLUDED.cho,
+    		sugar = EXCLUDED.sugar,
+    		fiber = EXCLUDED.fiber,
+    		ca = EXCLUDED.ca,
+    		fe = EXCLUDED.fe,
+    		p = EXCLUDED.p,
+    		k = EXCLUDED.k,
+    		na = EXCLUDED.na,
+    		vita = EXCLUDED.vita,
+    		reti = EXCLUDED.reti,
+    		caro = EXCLUDED.caro,
+    		thia = EXCLUDED.thia,
+    		ribo = EXCLUDED.ribo,
+    		niacin = EXCLUDED.niacin,
+    		vitc = EXCLUDED.vitc,
+    		chole = EXCLUDED.chole,
+    		sfa = EXCLUDED.sfa,
+    		trans = EXCLUDED.trans,
+    		mois = EXCLUDED.mois,
+    		ash = EXCLUDED.ash,
+    		vitd = EXCLUDED.vitd,
+    		sugar_calc_wgt_rto = EXCLUDED.sugar_calc_wgt_rto,
+    		na_calc_wgt_rto = EXCLUDED.na_calc_wgt_rto,
+    		eng_calc_wgt_rto = EXCLUDED.eng_calc_wgt_rto,
+    		protein_eng_rto = EXCLUDED.protein_eng_rto,
+    		alrg_ids = EXCLUDED.alrg_ids
+    </insert>
 </mapper>

@@ -52,6 +52,7 @@ export interface Material {
 }
 
 export interface GroupedMaterial {
+  categoryId?: number;
   categoryName: string;
   materialName: string;
   materialCode: string;
@@ -145,4 +146,50 @@ export interface MyMaterialPagination extends PaginationResponse {
 
 export interface GetMyMaterialsParams extends PaginationQuery {
   keyword?: string;
+}
+
+export interface RecipeSummary {
+  /** 'Y' 이면 사용자가 직접 만든 레시피 - 수정·삭제 가능 */
+  ownFlag?: string;
+  code: string;
+  name: string;
+  typeCode: string;
+  typeName?: string;
+  recipeDescription?: string;
+}
+
+export interface RecipePagination extends PaginationResponse {
+  items: RecipeSummary[];
+}
+
+export interface GetRecipesParams extends PaginationQuery {
+  keyword?: string;
+  typeCode?: string;
+  materialCode?: string;
+}
+
+export interface GetMyRecipesParams extends PaginationQuery {
+  keyword?: string;
+  typeCode?: string;
+  materialCode?: string;
+}
+
+export interface FoodTypeOption {
+  code: string;
+  content: string;
+  description?: string;
+  seq?: string;
+}
+
+export interface RecipeMaterialInput {
+  code: string;
+  recipeWeight: number;
+  calculationWeight?: number;
+}
+
+export interface SaveRecipePayload {
+  name: string;
+  typeCode: string;
+  recipeDescription?: string;
+  materials: RecipeMaterialInput[];
 }

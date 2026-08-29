@@ -1,5 +1,10 @@
 import { NUTRIENT_CODE_FORMULA, NUTRIENT_CODES_NINE } from '@/constants';
-import { CalorieCode, FormulaBetween, MandatoryFlag } from '@/types';
+import {
+  CalorieCode,
+  FormulaBetween,
+  MandatoryFlag,
+  SeparatedFlag
+} from '@/types';
 import {
   ITrayItem,
   NutrientCompare,
@@ -170,6 +175,62 @@ export const calculateTotalWeightInGrams = (
     return total + weightInGrams;
   }, 0);
   return totalWeight.toFixed(2);
+};
+
+// 7찬 식단은 트레이에 밥 칸이 없고 백미 75g을 별도로 섭취하는 것이 기준이라,
+// 영양 계산 시에만 이 재료를 합산 대상에 포함시킨다 (실제 트레이 칸에는 표시하지 않음).
+const SEVEN_DISH_COUNT = 7;
+const SEPARATE_RICE_WEIGHT_GRAM = 75;
+
+const getSeparateRiceFood = (): Food => ({
+  sequence: -1,
+  mandatoryFlag: MandatoryFlag.No,
+  separatedFlag: SeparatedFlag.No,
+  capacityVolume: 0,
+  displayedSequence: -1,
+  typeCode: 'FT00001',
+  typeName: '밥/죽/면',
+  unitCode: 'GAM',
+  unitName: 'g',
+  code: 'SEPARATE_RICE',
+  name: '백미 (별도 섭취)',
+  seasonCode: '',
+  recipeDescription: '',
+  materials: [
+    {
+      code: 'MT00021345',
+      name: '멥쌀_백미_생것',
+      originalCode: 'R101-008000301-0000',
+      unitCode: 'GAM',
+      unitName: 'g',
+      recipeWeight: SEPARATE_RICE_WEIGHT_GRAM,
+      calculationWeight: SEPARATE_RICE_WEIGHT_GRAM,
+      nutrients: [
+        { code: 'ENG', name: '에너지', unitCode: 'KCAL', unitName: 'kcal', amount: 3.66 },
+        { code: 'PROTEIN', name: '단백질', unitCode: 'GAM', unitName: 'g', amount: 0.0681 },
+        { code: 'FAT', name: '지방', unitCode: 'GAM', unitName: 'g', amount: 0.0105 },
+        { code: 'CHO', name: '탄수화물', unitCode: 'GAM', unitName: 'g', amount: 0.7874 },
+        { code: 'SUGAR', name: '당류', unitCode: 'GAM', unitName: 'g', amount: 0.005 },
+        { code: 'FIBER', name: '식이섬유', unitCode: 'GAM', unitName: 'g', amount: 0.019 },
+        { code: 'CA', name: '칼슘', unitCode: 'MLGAM', unitName: 'mg', amount: 0.07 },
+        { code: 'FE', name: '철', unitCode: 'MLGAM', unitName: 'mg', amount: 0.0024 },
+        { code: 'P', name: '인', unitCode: 'MLGAM', unitName: 'mg', amount: 1.01 },
+        { code: 'K', name: '칼륨', unitCode: 'MLGAM', unitName: 'mg', amount: 0.88 },
+        { code: 'NA', name: '나트륨', unitCode: 'MLGAM', unitName: 'mg', amount: 0.02 },
+        { code: 'NIACIN', name: '니아신', unitCode: 'MLGAM', unitName: 'mg', amount: 0.01059 },
+        { code: 'RIBO', name: '리보플라빈', unitCode: 'MLGAM', unitName: 'mg', amount: 0.00028 },
+        { code: 'THIA', name: '티아민', unitCode: 'MLGAM', unitName: 'mg', amount: 0.00099 },
+        { code: 'MOIS', name: '수분', unitCode: 'GAM', unitName: 'g', amount: 0.13 },
+        { code: 'ASH', name: '회분', unitCode: 'GAM', unitName: 'g', amount: 0.004 }
+      ]
+    }
+  ]
+});
+
+// 7찬(7개 요리) 트레이일 때만 별도 섭취하는 백미 75g을 영양 계산에 더해준다.
+export const withSeparateRiceIfSevenDish = (foods: Food[]): Food[] => {
+  if (foods.length !== SEVEN_DISH_COUNT) return foods;
+  return [...foods, getSeparateRiceFood()];
 };
 
 export const calculateNutrientTotals = (foods: Food[]): NutrientTotal[] => {
@@ -935,6 +996,7 @@ export const groupMaterialsByCategory = (
           } else {
             // If not exists, create a new entry
             groupedMap[categoryId] = {
+              categoryId,
               categoryName,
               materialName: name,
               materialCode: code,

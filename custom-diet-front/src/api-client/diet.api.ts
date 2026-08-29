@@ -20,12 +20,17 @@ import {
   DetailMaterialQueryParams,
   Food,
   FoodConversion,
+  FoodTypeOption,
   GetMyMaterialsParams,
+  GetMyRecipesParams,
+  GetRecipesParams,
   MaterialCategory,
   MaterialRepresentative,
   MaterialType,
   MyMaterial,
   MyMaterialPagination,
+  RecipePagination,
+  SaveRecipePayload,
   SearchMaterialWithPaginationParams
 } from '@/types/food.type';
 import {
@@ -34,7 +39,9 @@ import {
   NutrientStandardTemplate,
   NutritionStandardCategoryReport
 } from '@/types/nutrient.type';
+
 import { Tray } from '@/types/tray.type';
+import { AxiosResponse } from 'axios';
 import { http } from './http-wrapper';
 
 const DIET_BASE_URL = '/diets';
@@ -351,5 +358,96 @@ export const dietApi = {
 
   deleteMyMaterial: async (matCd: string): Promise<void> => {
     return http.delete(`${DIET_BASE_URL}/my-materials/${matCd}`);
+  },
+
+  getFoodTypes: async (): Promise<FoodTypeOption[]> => {
+    return http.get('/commons', { params: { intgCd: 'CD00013' } });
+  },
+
+  getRecipes: async (params: GetRecipesParams): Promise<RecipePagination> => {
+    const searchParams = new URLSearchParams();
+    searchParams.append('page', params.page.toString());
+    searchParams.append('limit', params.limit.toString());
+    if (params.keyword) searchParams.append('keyword', params.keyword);
+    if (params.typeCode) searchParams.append('fdTpCd', params.typeCode);
+    if (params.materialCode) searchParams.append('matCd', params.materialCode);
+    return http.get(`${DIET_BASE_URL}/foods/paging`, { params: searchParams });
+  },
+
+  getMyRecipes: async (params: GetMyRecipesParams): Promise<RecipePagination> => {
+    const searchParams = new URLSearchParams();
+    searchParams.append('page', params.page.toString());
+    searchParams.append('limit', params.limit.toString());
+    if (params.keyword) searchParams.append('keyword', params.keyword);
+    if (params.typeCode) searchParams.append('fdTpCd', params.typeCode);
+    if (params.materialCode) searchParams.append('matCd', params.materialCode);
+    return http.get(`${DIET_BASE_URL}/foods/my-recipes/paging`, {
+      params: searchParams
+    });
+  },
+
+  // 사용자가 재료까지 직접 구성해 만드는 레시피
+  createRecipe: async (payload: SaveRecipePayload): Promise<Food> => {
+    return http.post(`${DIET_BASE_URL}/recipes`, payload);
+  },
+
+  updateRecipe: async (
+    foodCode: string,
+    payload: SaveRecipePayload
+  ): Promise<Food> => {
+    return http.put(`${DIET_BASE_URL}/recipes/${foodCode}`, payload);
+  },
+
+  deleteRecipe: async (foodCode: string): Promise<void> => {
+    return http.delete(`${DIET_BASE_URL}/recipes/${foodCode}`);
+  },
+
+  // 저장된 식단을 엑셀 파일(.xlsx)로 다운로드
+  // (응답 인터셉터가 responseType: 'blob' 요청에 한해 AxiosResponse 전체를 그대로 반환함)
+  downloadDietExcel: async (
+    dietId: number
+  ): Promise<{ blob: Blob; fileName: string }> => {
+    const response = (await http.get(`${DIET_BASE_URL}/${dietId}/export/excel`, {
+      responseType: 'blob'
+    })) as unknown as AxiosResponse<Blob>;
+
+    const disposition = response.headers['content-disposition'] as string | undefined;
+    let fileName = `diet_${dietId}.xlsx`;
+    if (disposition) {
+      const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+      if (utf8Match?.[1]) {
+        fileName = decodeURIComponent(utf8Match[1]);
+      } else {
+        const asciiMatch = disposition.match(/filename="?([^";]+)"?/i);
+        if (asciiMatch?.[1]) fileName = asciiMatch[1];
+      }
+    }
+
+    return { blob: response.data, fileName };
+  },
+
+  // 여러 식단을 하나의 엑셀 파일로 한번에 다운로드 (대상자 목록에서 다중 선택)
+  downloadDietsExcel: async (
+    dietIds: number[]
+  ): Promise<{ blob: Blob; fileName: string }> => {
+    const response = (await http.post(
+      `${DIET_BASE_URL}/export/excel`,
+      { dietIds },
+      { responseType: 'blob' }
+    )) as unknown as AxiosResponse<Blob>;
+
+    const disposition = response.headers['content-disposition'] as string | undefined;
+    let fileName = `diets_${dietIds.length}.xlsx`;
+    if (disposition) {
+      const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+      if (utf8Match?.[1]) {
+        fileName = decodeURIComponent(utf8Match[1]);
+      } else {
+        const asciiMatch = disposition.match(/filename="?([^";]+)"?/i);
+        if (asciiMatch?.[1]) fileName = asciiMatch[1];
+      }
+    }
+
+    return { blob: response.data, fileName };
   }
 };

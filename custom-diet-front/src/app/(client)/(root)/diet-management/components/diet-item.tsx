@@ -25,6 +25,9 @@ interface DietItemProps {
   onFavorite: (id: number, favorite: string) => void;
   onUpdate?: () => void;
   onDetail?: () => void;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (id: number) => void;
 }
 
 const DietItem = ({
@@ -33,7 +36,10 @@ const DietItem = ({
   onDelete,
   onFavorite,
   onUpdate,
-  onDetail
+  onDetail,
+  selectable = false,
+  selected = false,
+  onToggleSelect
 }: DietItemProps) => {
   const path = usePathname();
   const router = useRouter();
@@ -42,8 +48,17 @@ const DietItem = ({
   const isSelected = diet.id.toString() === pathId;
 
   const handleClick = () => {
+    if (selectable) {
+      onToggleSelect && onToggleSelect(diet.id);
+      return;
+    }
     router.push(`${DIET_MANAGEMENT_URL}/${diet.id}`);
     onDetail && onDetail();
+  };
+
+  const handleToggleSelect = (event: React.MouseEvent | React.ChangeEvent) => {
+    event.stopPropagation();
+    onToggleSelect && onToggleSelect(diet.id);
   };
 
   const goToUpdate = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -63,10 +78,23 @@ const DietItem = ({
       className={cn(
         'flex h-10 w-full cursor-pointer items-center justify-between rounded-lg p-4 pr-2 text-foreground transition-colors hover:rounded-lg hover:bg-secondary',
         isSelected &&
-          'rounded-lg bg-primary text-white hover:bg-primary hover:text-white'
+          !selectable &&
+          'rounded-lg bg-primary text-white hover:bg-primary hover:text-white',
+        selectable &&
+          selected &&
+          'rounded-lg bg-secondary text-foreground'
       )}
     >
       <div className="flex items-center gap-2">
+        {selectable && (
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={handleToggleSelect}
+            onClick={(e) => e.stopPropagation()}
+            className="h-4 w-4 shrink-0 accent-primary"
+          />
+        )}
         {isFavorite && (
           <Star fill="#ffc30f" color="#ffc30f" className="h-4 w-4" />
         )}
@@ -78,41 +106,43 @@ const DietItem = ({
           {diet.name}
         </p>
       </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className={cn('rounded-l-none')}
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </div>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>행위</DropdownMenuLabel>
-          <DropdownMenuItem
-            onClick={(event) => {
-              event.stopPropagation();
-              const favorite: string = isFavorite
-                ? FavouriteFlag.No
-                : FavouriteFlag.Yes;
-              onFavorite(diet.id, favorite);
-            }}
-          >
-            <Star
-              className="mr-2 h-4 w-4"
-              fill={!isFavorite ? '#ffc30f' : '#cccccc'}
-              color={!isFavorite ? '#ffc30f' : '#cccccc'}
-            />
-            {isFavorite ? '즐겨찾기 해제' : '즐겨찾기에 추가'}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={goToUpdate}>
-            <Pencil1Icon className="mr-2 h-4 w-4 text-primary" /> 수정
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleDelete}>
-            <Trash2 className="mr-2 h-4 w-4 text-destructive" /> 삭제
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {!selectable && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className={cn('rounded-l-none')}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>행위</DropdownMenuLabel>
+            <DropdownMenuItem
+              onClick={(event) => {
+                event.stopPropagation();
+                const favorite: string = isFavorite
+                  ? FavouriteFlag.No
+                  : FavouriteFlag.Yes;
+                onFavorite(diet.id, favorite);
+              }}
+            >
+              <Star
+                className="mr-2 h-4 w-4"
+                fill={!isFavorite ? '#ffc30f' : '#cccccc'}
+                color={!isFavorite ? '#ffc30f' : '#cccccc'}
+              />
+              {isFavorite ? '즐겨찾기 해제' : '즐겨찾기에 추가'}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={goToUpdate}>
+              <Pencil1Icon className="mr-2 h-4 w-4 text-primary" /> 수정
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleDelete}>
+              <Trash2 className="mr-2 h-4 w-4 text-destructive" /> 삭제
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   );
 };

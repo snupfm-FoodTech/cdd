@@ -15,11 +15,15 @@ import {
   DetailMaterial,
   DetailMaterialQueryParams,
   GetMyMaterialsParams,
+  GetMyRecipesParams,
+  GetRecipesParams,
+  SaveRecipePayload,
   SearchMaterialWithPaginationParams
 } from '@/types/food.type';
 import { INutrientSummary } from '@/types/nutrient.type';
 import {
   keepPreviousData,
+  QueryClient,
   useMutation,
   useQuery,
   useQueryClient,
@@ -243,6 +247,18 @@ export const useFood = (foodCode: string, foodName: string) => {
   });
 };
 
+export const useRecipeDetail = (
+  foodCode: string,
+  foodName: string,
+  options?: { enabled?: boolean }
+) => {
+  return useQuery({
+    queryKey: [QueryKeys.DIET_FOOD, foodCode, foodName],
+    queryFn: () => dietApi.getFood(foodCode, foodName),
+    enabled: !!foodCode && (options?.enabled ?? true)
+  });
+};
+
 export const useAllergenCheckFood = () => {
   return useMutation({
     mutationFn: (params: IAllergenCheckFood) =>
@@ -269,6 +285,50 @@ export const useSaveExcludedAllergen = (dietId: number) => {
     onError: () => {
       toast({
         title: '알레르기 제외 항목 저장에 실패했습니다.',
+        variant: 'destructive'
+      });
+    }
+  });
+};
+
+export const useDownloadDietExcel = (dietId: number) => {
+  return useMutation({
+    mutationFn: () => dietApi.downloadDietExcel(dietId),
+    onSuccess: ({ blob, fileName }) => {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    },
+    onError: () => {
+      toast({
+        title: '엑셀 파일 다운로드에 실패했습니다.',
+        variant: 'destructive'
+      });
+    }
+  });
+};
+
+export const useDownloadDietsExcel = () => {
+  return useMutation({
+    mutationFn: (dietIds: number[]) => dietApi.downloadDietsExcel(dietIds),
+    onSuccess: ({ blob, fileName }) => {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    },
+    onError: () => {
+      toast({
+        title: '엑셀 파일 다운로드에 실패했습니다.',
         variant: 'destructive'
       });
     }
@@ -511,12 +571,14 @@ export const useDetailMaterials = (
 };
 
 export const useDetailMaterialsWithPagination = (
-  params: SearchMaterialWithPaginationParams
+  params: SearchMaterialWithPaginationParams,
+  options?: { enabled?: boolean }
 ) => {
   return useQuery({
     queryKey: [QueryKeys.MATERIAL_LIST_PAGINATION, { ...params }],
     queryFn: () => dietApi.searchMaterialWithPagination(params),
-    placeholderData: keepPreviousData
+    placeholderData: keepPreviousData,
+    ...options
   });
 };
 
@@ -603,6 +665,7 @@ export const useGetMaterialRepresentatives = (categoryId: number) => {
 };
 
 export const useSaveRecipe = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
       foodCode,
@@ -613,12 +676,13 @@ export const useSaveRecipe = () => {
       foodName?: string;
       recipe?: string | '';
     }) => dietApi.saveRecipe(foodCode, recipe, foodName),
-    // onSuccess: () => {
-    //   toast({
-    //     title: '레시피 저장 성공!',
-    //     variant: 'success'
-    //   });
-    // },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.MY_RECIPE_LIST] });
+      // toast({
+      //   title: '레시피 저장 성공!',
+      //   variant: 'success'
+      // });
+    },
     onError: () => {
       toast({
         title: '저장하지 못했습니다.',
@@ -673,6 +737,116 @@ export const useMyMaterials = (
     queryFn: () => dietApi.getMyMaterials(params),
     placeholderData: keepPreviousData,
     ...options
+  });
+};
+
+export const useFoodTypes = () => {
+  return useQuery({
+    queryKey: [QueryKeys.FOOD_TYPE_LIST],
+    queryFn: () => dietApi.getFoodTypes(),
+    staleTime: 1000 * 60 * 10
+  });
+};
+
+export const useRecipes = (
+  params: GetRecipesParams,
+  options?: { enabled?: boolean }
+) => {
+  return useQuery({
+    queryKey: [QueryKeys.RECIPE_LIST, { ...params }],
+    queryFn: () => dietApi.getRecipes(params),
+    placeholderData: keepPreviousData,
+    ...options
+  });
+};
+
+export const useMyRecipes = (
+  params: GetMyRecipesParams,
+  options?: { enabled?: boolean }
+) => {
+  return useQuery({
+    queryKey: [QueryKeys.MY_RECIPE_LIST, { ...params }],
+    queryFn: () => dietApi.getMyRecipes(params),
+    placeholderData: keepPreviousData,
+    ...options
+  });
+};
+
+/**
+ * 레시피를 만들면 레시피 목록뿐 아니라 식단 설계의 음식 검색 결과에도 즉시 반영되어야 하므로
+ * 음식 관련 캐시까지 함께 무효화한다.
+ */
+const invalidateRecipeQueries = (queryClient: QueryClient) => {
+  queryClient.invalidateQueries({ queryKey: [QueryKeys.RECIPE_LIST] });
+  queryClient.invalidateQueries({ queryKey: [QueryKeys.MY_RECIPE_LIST] });
+  queryClient.invalidateQueries({ queryKey: [QueryKeys.DIET_FOOD_LIST] });
+  queryClient.invalidateQueries({ queryKey: [QueryKeys.DIET_FOOD] });
+};
+
+export const useCreateRecipe = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: SaveRecipePayload) => dietApi.createRecipe(payload),
+    onSuccess: () => {
+      invalidateRecipeQueries(queryClient);
+      toast({
+        title: '성공',
+        description: '새로운 레시피가 추가되었습니다!',
+        variant: 'success'
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: error?.errors?.[0] ?? '레시피 저장에 실패했습니다.',
+        variant: 'destructive'
+      });
+    }
+  });
+};
+
+export const useUpdateRecipe = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      foodCode,
+      payload
+    }: {
+      foodCode: string;
+      payload: SaveRecipePayload;
+    }) => dietApi.updateRecipe(foodCode, payload),
+    onSuccess: () => {
+      invalidateRecipeQueries(queryClient);
+      toast({
+        title: '레시피가 수정되었습니다.',
+        variant: 'success'
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: error?.errors?.[0] ?? '레시피 수정에 실패했습니다.',
+        variant: 'destructive'
+      });
+    }
+  });
+};
+
+export const useDeleteRecipe = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (foodCode: string) => dietApi.deleteRecipe(foodCode),
+    onSuccess: () => {
+      invalidateRecipeQueries(queryClient);
+      toast({
+        title: '레시피가 삭제되었습니다.',
+        variant: 'success'
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: error?.errors?.[0] ?? '레시피 삭제에 실패했습니다.',
+        variant: 'destructive'
+      });
+    }
   });
 };
 

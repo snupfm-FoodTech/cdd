@@ -26,9 +26,14 @@ http.interceptors.request.use((config) => {
   }
   return config;
 });
-
+ 
 http.interceptors.response.use(
   (response) => {
+    // 파일 다운로드(blob) 응답은 표준 ResponseDto 봉투가 아니므로 그대로 반환해야 함
+    // (파일명 헤더가 필요한 경우가 많아 response 전체를 그대로 반환)
+    if (response.config.responseType === 'blob') {
+      return response;
+    }
     return response.data.content;
   },
   (error: AxiosError) => {

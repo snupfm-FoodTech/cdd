@@ -379,13 +379,19 @@
 		    <artifactId>modelmapper</artifactId>
 		    <version>3.1.0</version>
 		</dependency>
-		
+
 		<dependency>
 		    <groupId>org.thymeleaf</groupId>
 		    <artifactId>thymeleaf-spring5</artifactId>
 		    <version>3.0.12.RELEASE</version> 
 		</dependency>
-		
+
+		<!-- 식단 엑셀 다운로드 기능용 (Apache POI) -->
+		<dependency>
+		    <groupId>org.apache.poi</groupId>
+		    <artifactId>poi-ooxml</artifactId>
+		    <version>5.2.3</version>
+		</dependency>
 
 	</dependencies>
 

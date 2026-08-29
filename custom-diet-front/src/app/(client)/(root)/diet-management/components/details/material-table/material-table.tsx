@@ -80,16 +80,7 @@ const MaterialTable = ({
     column: any;
     cell: Cell<Material, unknown>;
   }) => {
-    const isOriginalCode = column === 'originalCode';
     const isName = column === 'name';
-
-    if (isOriginalCode) {
-      return (
-        <span className={cn('flex w-full font-semibold')}>
-          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-        </span>
-      );
-    }
 
     if (isName) {
       return (
@@ -128,8 +119,7 @@ const MaterialTable = ({
 
                     const getValue = cell.getValue();
                     const column = (cell.column.columnDef as any).accessorKey;
-                    const isNotHeader =
-                      column === 'originalCode' || column === 'name';
+                    const isNotHeader = column === 'name';
 
                     return (
                       <div

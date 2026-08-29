@@ -68,5 +68,9 @@ export const QueryKeys = {
 
   FOOD_CONVERSION: 'food-conversion',
 
-  MY_MATERIAL_LIST: 'my-material-list'
+  MY_MATERIAL_LIST: 'my-material-list',
+
+  RECIPE_LIST: 'recipe-list',
+  MY_RECIPE_LIST: 'my-recipe-list',
+  FOOD_TYPE_LIST: 'food-type-list'
 } as const;
