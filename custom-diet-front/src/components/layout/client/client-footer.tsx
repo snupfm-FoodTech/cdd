@@ -15,7 +15,7 @@ const ClientFooter = () => {
         <div className="space-y-3 text-sm leading-relaxed text-gray-600 md:text-base">
           <p>
             <span className="font-medium text-gray-700">
-              서울대학교 정밀푸드솔루션
+              서울대학교 정밀식의약솔루션
             </span>
             <Sep />
             서울시 관악구 관악로1 서울대학교 200동 8102호
@@ -42,15 +42,15 @@ const ClientFooter = () => {
           </p>
 
           <p className="pt-2 text-xs text-gray-500 md:text-sm">
-            Copyright ⓒ서울대학교 정밀푸드솔루션,
+            Copyright ⓒ서울대학교 정밀식의약솔루션,
             월드푸드테크협의회, FOODPOLIS. All rights reserved.
           </p>
 
           {/* Logo */}
           <div className="flex flex-wrap items-center gap-6 pt-3">
             <img
-              src={`${BASE_PATH}/img/food-solution.png`}
-              alt="서울대학교 로고"
+              src={`${BASE_PATH}/img/food-medicine-solution.png`}
+              alt="서울대학교 정밀식의약솔루션 연구실"
               className="w-36 md:w-48"
               style={{ height: 'auto' }}
             />
