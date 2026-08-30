@@ -48,6 +48,7 @@ import egovframework.let.diet.param.CheckAllergenFoodMaterialParam;
 import egovframework.let.diet.param.FindAllDietParam;
 import egovframework.let.diet.param.FindAllFoodParam;
 import egovframework.let.diet.param.FindAllMaterialParam;
+import egovframework.let.diet.util.MaterialSearchKeyword;
 import egovframework.let.diet.param.FindMyFoodsParam;
 import egovframework.let.diet.param.FindMyMaterialsParam;
 
@@ -418,6 +419,8 @@ public class DietDAO extends EgovAbstractMapper {
 		sqlParams.put("offset", param.getOffset());
 		sqlParams.put("limit", param.getLimit());
 		sqlParams.put("keyword", param.getKeyword());
+		// 표기가 갈리는 재료(쇠고기/소고기 등)를 한쪽으로만 검색해도 찾히도록 확장한다
+		sqlParams.put("keywords", MaterialSearchKeyword.expand(param.getKeyword()));
 		sqlParams.put("matCdList", param.getMatCdList());
 		sqlParams.put("representativeId", param.getRepresentativeId());
 		sqlParams.put("excludedAllergenIds", param.getExcludedAllergenIds());
