@@ -8,6 +8,7 @@ import { FavouriteFlag } from "@/types";
 import DietReportsMonthlyPriceChart from "../components/dashboard/DietReportsMonthlyPriceChart";
 import NutritionStandardCategoryReport from "../components/dashboard/NutritionStandardCategoryReport";
 import ClientHeaderPage from "@/components/layout/client/client-header-page";
+import DietGuideDialog from "../components/diet-guide-dialog";
 import ClientFooter from "@/components/layout/client/client-footer";
 import { useRouter } from "next/navigation";
 import { checkTokenExisted } from "@/utils";
@@ -41,6 +42,9 @@ const DietManagement = () => {
                 breadcrumbs={[
                     { label: '식단 관리' }
                 ]}
+                titleSuffix={
+                    <DietGuideDialog className="border-white bg-white/95 text-foreground hover:bg-white" />
+                }
             />
             <div className="rounded-2xl bg-gray-100 p-10">
                 <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 xl:grid-cols-2 gap-4">

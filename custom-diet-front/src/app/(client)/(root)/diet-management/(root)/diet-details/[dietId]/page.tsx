@@ -26,6 +26,7 @@ import {
 } from '@/types/diet.type';
 import { Food, FoodMaterialForm, Material } from '@/types/food.type';
 import { INutrientSummary } from '@/types/nutrient.type';
+import { distributeWeightByUnit } from '../../../helpers';
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
 import isNil from 'lodash/isNil';
@@ -265,7 +266,8 @@ const DietDetails = ({ params }: DietDetailProps) => {
 
   const handleOnUpdateTotalWeight = (
     totalWeight: number,
-    materials: Material[]
+    materials: Material[],
+    unit: number
   ) => {
     setIsManualUpdate(true);
     if (!food || !foods) return;
@@ -278,14 +280,8 @@ const DietDetails = ({ params }: DietDetailProps) => {
       return;
     }
 
-    // Calculate the total sum of recipeWeight from all materials
     const totalRecipeWeight = materials.reduce(
       (sum, m) => sum + (m.recipeWeight || 0),
-      0
-    );
-
-    const totalCalculationWeight = materials.reduce(
-      (sum, m) => sum + (m.calculationWeight || 0),
       0
     );
 
@@ -298,19 +294,16 @@ const DietDetails = ({ params }: DietDetailProps) => {
       return;
     }
 
-    // Calculate the new calculationWeight for each material
-    const updatedMaterials = materials.map((m) => {
-      const ratioRecipeWeight = (m.recipeWeight || 0) / totalRecipeWeight;
-      const ratioCalculationWeight =
-        (m.calculationWeight || 0) / totalCalculationWeight;
-      return {
-        ...m,
-        calculationWeight: parseFloat(
-          (totalWeight * ratioCalculationWeight).toFixed(2)
-        ),
-        recipeWeight: parseFloat((totalWeight * ratioRecipeWeight).toFixed(2))
-      };
-    });
+    // 비율대로 나누되 저울로 잴 수 있는 단위로 떨어지게 맞춘다.
+    // 그냥 비율로만 나누면 166.67g 같은 값이 나온다.
+    const distributed = distributeWeightByUnit(materials, totalWeight, unit);
+    const updatedMaterials = distributed.materials;
+
+    if (distributed.totalWeight !== totalWeight) {
+      toast({
+        title: `총 중량이 ${distributed.totalWeight}g 으로 맞춰졌습니다 (${unit}g 단위).`
+      });
+    }
 
     // Save updated materials temporarily
     setMaterialsNutrients(updatedMaterials);

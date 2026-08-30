@@ -32,6 +32,7 @@ import { Plus } from 'lucide-react';
 import { scrollToTop } from '@/utils';
 import { useWindowScroll } from 'react-use';
 import Allergens from '../allergens';
+import DietGuideDialog from '../diet-guide-dialog';
 import DietCompareNutrient from './diet-compare-nutrient';
 import { INutrientSummary } from '@/types/nutrient.type';
 import { useAtom, useAtomValue } from 'jotai';
@@ -598,7 +599,50 @@ const DietFoodSelect = ({
     setSelectedSeperateTrayItem(separate ? item : undefined);
   };
 
-  const handleSelectFoodIntoTray = (foodItem: Food) => {
+  /**
+   * 중량 정보 패널에서 총 중량을 맞췄을 때. 중량만 바뀐 음식 배열을 받아 세 곳에 모두 반영한다.
+   *  - 식판 목록(화면에 보이는 것)
+   *  - 폼 값(저장되는 것)
+   *  - 부모 상태(영양성분·영양평가가 다시 계산되는 것)
+   * 하나라도 빠지면 화면과 저장값이 어긋난다.
+   */
+  const handleAdjustWeights = (adjustedFoods: ITrayItem[]) => {
+    const materialsBySequence = new Map(
+      adjustedFoods.map((food) => [String(food.sequence), food.materials ?? []])
+    );
+
+    const applyToItems = (items: ITrayItem[]) =>
+      items.map((item) => {
+        const materials = materialsBySequence.get(String(item.sequence));
+        return materials ? { ...item, materials } : item;
+      });
+
+    setListTrayItem((prev) => applyToItems(prev));
+    setSeperateList((prev) => applyToItems(prev));
+
+    const formFoods = formDietDetails.getValues('foods').map((food) => {
+      const materials = materialsBySequence.get(String(food.sequence));
+      if (!materials) return food;
+      return {
+        ...food,
+        materials: materials.map((material) => ({
+          code: material.code,
+          recipeWeight: material.recipeWeight,
+          calculationWeight: material.calculationWeight
+        }))
+      };
+    });
+
+    formDietDetails.setValue('foods', formFoods, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: false
+    });
+
+    onFoods(adjustedFoods);
+  };
+
+  const handleSelectFoodIntoTray =(foodItem: Food) => {
     setSelectedFood(foodItem);
 
     queryClient.removeQueries({
@@ -722,11 +766,35 @@ const DietFoodSelect = ({
                 'section-padding fixed left-0 top-[4rem] z-[11] mb-0 w-full border-none bg-white py-3 shadow-lg md:py-5'
             )}
           >
-            <div className="flex items-center justify-between">
-              <h3 className="w-1/2 text-lg font-semibold tracking-tight md:text-xl">
-                {diet?.name}
-              </h3>
-              <div className="flex w-1/2 justify-end gap-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
+                <h3 className="text-lg font-semibold tracking-tight md:text-xl">
+                  {diet?.name}
+                </h3>
+
+                {/* 기준 충족 여부는 이 화면의 결론이라 식단명 바로 옆에 둔다 */}
+                {originalFoods.length > 0 &&
+                  (warningNutrients.length > 0 ? (
+                    <span
+                      className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-destructive px-2.5 py-1 text-xs font-semibold text-white md:text-sm"
+                      title={`기준을 벗어난 영양소: ${warningNutrients
+                        .map((item) => item.name)
+                        .join(', ')}`}
+                    >
+                      <ExclamationTriangleIcon className="h-4 w-4 shrink-0" />
+                      <span className="truncate">
+                        영양기준 부적합 ·{' '}
+                        {warningNutrients.map((item) => item.name).join(', ')}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center rounded-full bg-[#e6f4ea] px-2.5 py-1 text-xs font-semibold text-[#0f7a2e] md:text-sm">
+                      영양기준 충족
+                    </span>
+                  ))}
+              </div>
+              <div className="flex shrink-0 items-center justify-end gap-2">
+                <DietGuideDialog />
                 <Button
                   type="submit"
                   disabled={!formDietDetails.formState.isValid}
@@ -855,6 +923,7 @@ const DietFoodSelect = ({
                   onWarningNutrientsChange={onWarningNutrientsChange}
                   onChangeNutrientsSummary={onChangeNutrientsSummary}
                   initialNutrientsSummary={initialNutrientsSummary || []}
+                  onChangeFoods={handleAdjustWeights}
                 />
               </div>
             )}

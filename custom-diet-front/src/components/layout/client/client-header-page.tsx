@@ -1,6 +1,7 @@
 import { HOME_URL } from '@/constants/routes';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { ReactNode } from 'react';
 
 interface Breadcrumb {
   label: string;
@@ -11,12 +12,15 @@ interface ClientHeaderPageProps {
   image?: string; // Optional background image
   title: string; // Page title
   breadcrumbs: Breadcrumb[]; // Breadcrumb trail
+  /** 제목 옆에 붙는 상태 표시 (예: 영양평가 결과) */
+  titleSuffix?: ReactNode;
 }
 
 const ClientHeaderPage = ({
   image,
   title,
-  breadcrumbs
+  breadcrumbs,
+  titleSuffix
 }: ClientHeaderPageProps) => {
   const router = useRouter();
 
@@ -74,9 +78,12 @@ const ClientHeaderPage = ({
 
       {/* Content */}
       <div className="section-padding absolute inset-0 z-10 flex flex-col items-start justify-center text-left">
-        <h1 className="mb-2 text-xl font-bold text-white sm:text-2xl md:mb-3 md:text-3xl">
-          {title}
-        </h1>
+        <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-2 md:mb-3">
+          <h1 className="text-xl font-bold text-white sm:text-2xl md:text-3xl">
+            {title}
+          </h1>
+          {titleSuffix}
+        </div>
         <p className="mt-1 text-sm font-semibold text-white sm:text-base">
           <span
             className="cursor-pointer underline underline-offset-4"

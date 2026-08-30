@@ -4,7 +4,12 @@ import { CDTextArea } from '@/components/cd-text-area';
 import { Button } from '@/components/ui/button';
 import { FormControl, FormField, FormItem } from '@/components/ui/form';
 import { FieldValues, SubmitHandler, useFormContext } from 'react-hook-form';
-import { calculateTotalWeightInGrams } from '../../helpers';
+import {
+  calculateTotalWeightInGrams,
+  WEIGHT_UNIT_STORAGE_KEY,
+  WEIGHT_UNITS,
+  WeightUnit
+} from '../../helpers';
 import FoodConversionModal from './food-conversion-modal';
 import MyFoodsModal from './my-foods-modal';
 import { FoodInfoFormValue } from './food-info';
@@ -13,7 +18,7 @@ import MaterialTable from './material-table/material-table';
 import { FC, useEffect, useState, useTransition } from 'react';
 import NumberInputFloat from '@/components/number-input-float';
 import { Food } from '@/types/food.type';
-import { useSaveRecipe } from '@/hooks/diet.hook';
+import { useCreateRecipe, useSaveRecipe } from '@/hooks/diet.hook';
 import { toast } from '@/hooks/use-toast';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import {
@@ -23,7 +28,7 @@ import {
   setFoodIdentityAtom
 } from '@/atoms/foodIdentity';
 import useWait from '@/hooks/use-wait';
-import { Loader2 } from 'lucide-react';
+import { BookmarkPlus, Loader2 } from 'lucide-react';
 
 enum ETotalWeightMode {
   EDIT = 'edit',
@@ -39,7 +44,7 @@ interface FoodDetailInfoProps {
   onSaveMaterials: (materials: FoodInfoFormValue) => void;
   onSaveFoods: () => void;
   food: Food;
-  onUpdateTotalWeight: (totalWeight: number) => void;
+  onUpdateTotalWeight: (totalWeight: number, unit: number) => void;
   onCancelTotalWeight: () => void;
   allergens: number[];
 }
@@ -81,7 +86,30 @@ const FoodDetailInfo: FC<FoodDetailInfoProps> = ({
 
   const [isPending, startTransition] = useTransition();
 
+  // 마지막에 고른 정리 단위를 기억한다. 사람마다 쓰는 저울 눈금이 다르고,
+  // 매번 다시 고르게 하면 결국 안 쓰게 된다.
+  const [weightUnit, setWeightUnit] = useState<number>(WEIGHT_UNITS[0]);
+
+  useEffect(() => {
+    try {
+      const saved = Number(localStorage.getItem(WEIGHT_UNIT_STORAGE_KEY));
+      if (WEIGHT_UNITS.includes(saved as WeightUnit)) setWeightUnit(saved);
+    } catch (error) {
+      // 브라우저가 저장을 막아도 기본 단위로 동작하면 된다
+    }
+  }, []);
+
+  const handleChangeUnit = (unit: number) => {
+    setWeightUnit(unit);
+    try {
+      localStorage.setItem(WEIGHT_UNIT_STORAGE_KEY, String(unit));
+    } catch (error) {
+      // 무시
+    }
+  };
+
   const { mutateAsync: mutateAsyncRecipe } = useSaveRecipe();
+  const { mutate: createRecipe, isPending: isSavingRecipe } = useCreateRecipe();
 
   const startEditName = () => {
     setTempFoodName(getValues('foodName') ?? '');
@@ -135,6 +163,48 @@ const FoodDetailInfo: FC<FoodDetailInfoProps> = ({
         });
         onSaveMaterials(foodInfoValues);
       } catch (err) {}
+    });
+  };
+
+  /**
+   * 식단에서 구성한 음식을 재료 구성까지 통째로 내 레시피로 저장한다.
+   * 기존 "저장"(onSaveRecipe)은 이 식단 안에서 이름·조리법만 덮어쓰는 것이라
+   * 다른 식단에서 다시 쓸 수 없었다.
+   */
+  const handleSaveAsMyRecipe = () => {
+    const values = getValues() as FoodInfoFormValue;
+    const name = (values.foodName || '').trim();
+
+    if (!name) {
+      toast({ title: '음식명을 입력해주세요.', variant: 'destructive' });
+      return;
+    }
+    if (!food?.typeCode) {
+      toast({
+        title: '음식 분류를 알 수 없어 저장할 수 없습니다.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    const materialsToSave = (values.materials ?? []).filter(
+      (material) => (material.recipeWeight ?? 0) > 0
+    );
+    if (materialsToSave.length === 0) {
+      toast({
+        title: '재료가 있어야 레시피로 저장할 수 있습니다.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    createRecipe({
+      name,
+      typeCode: food.typeCode,
+      recipeDescription: values.recipeDescription || '',
+      materials: materialsToSave.map((material) => ({
+        code: material.code,
+        recipeWeight: material.recipeWeight
+      }))
     });
   };
 
@@ -254,11 +324,26 @@ const FoodDetailInfo: FC<FoodDetailInfoProps> = ({
             )}
 
             {totalWeightMode === ETotalWeightMode.EDIT ? (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* 저울 눈금이 현장마다 달라 정리 단위를 고르게 하고, 고른 값은 브라우저에 기억시킨다 */}
+                <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  단위
+                  <select
+                    className="h-8 rounded-md border bg-background px-2 text-sm text-foreground"
+                    value={weightUnit}
+                    onChange={(e) => handleChangeUnit(Number(e.target.value))}
+                  >
+                    {WEIGHT_UNITS.map((unit) => (
+                      <option key={unit} value={unit}>
+                        {unit}g
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <Button
                   type="button"
                   size="sm"
-                  onClick={() => onUpdateTotalWeight(totalWeight)}
+                  onClick={() => onUpdateTotalWeight(totalWeight, weightUnit)}
                 >
                   저장
                 </Button>
@@ -338,6 +423,17 @@ const FoodDetailInfo: FC<FoodDetailInfoProps> = ({
           onClick={handleCancel}
         >
           초기화
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          className="font-semibold"
+          variant="outline"
+          loading={isSavingRecipe}
+          onClick={handleSaveAsMyRecipe}
+        >
+          <BookmarkPlus className="mr-1 h-4 w-4" aria-hidden />
+          내 레시피로 저장
         </Button>
       </div>
     </div>
