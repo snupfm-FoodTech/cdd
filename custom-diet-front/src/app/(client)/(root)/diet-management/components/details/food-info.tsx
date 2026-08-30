@@ -45,7 +45,11 @@ interface FoodInfoProps {
   onSaveFoods: () => void;
   onSave: (materials: FoodInfoFormValue) => void;
   onMaterialsChange: (materials: Material[]) => void;
-  onUpdateTotalWeight: (totalWeight: number, materials: Material[]) => void;
+  onUpdateTotalWeight: (
+    totalWeight: number,
+    materials: Material[],
+    unit: number
+  ) => void;
   allergens: number[];
 }
 
@@ -79,9 +83,9 @@ const FoodInfo = ({
 
   const materials = form.watch('materials');
 
-  const handleUpdateTotalWeight = (totalWeight: number) => {
+  const handleUpdateTotalWeight = (totalWeight: number, unit: number) => {
     setTotalWeight(totalWeight);
-    onUpdateTotalWeight(totalWeight, materials);
+    onUpdateTotalWeight(totalWeight, materials, unit);
   };
 
   // When selected food changes:

@@ -18,6 +18,7 @@ interface DietCompareNutrientProps {
   foods: ITrayItem[];
   onWarningNutrientsChange: (nutrients: NutrientCompare[]) => void;
   onChangeNutrientsSummary: (nutrients: NutrientCompare[]) => void;
+  onChangeFoods?: (foods: ITrayItem[]) => void;
 }
 
 const DietCompareNutrient = ({
@@ -25,7 +26,8 @@ const DietCompareNutrient = ({
   foods,
   initialNutrientsSummary,
   onWarningNutrientsChange,
-  onChangeNutrientsSummary
+  onChangeNutrientsSummary,
+  onChangeFoods
 }: DietCompareNutrientProps) => {
   const [combinedNutrients, setCombinedNutrients] = useState<NutrientCompare[]>(
     []
@@ -90,6 +92,8 @@ const DietCompareNutrient = ({
             nutrients={combinedNutrients}
             warningNutrients={warningNutrients}
             onChangeNutrientsSummary={handleChangeNutrientsSummary}
+            foods={foods}
+            onChangeFoods={onChangeFoods}
           />
         </div>
       </div>

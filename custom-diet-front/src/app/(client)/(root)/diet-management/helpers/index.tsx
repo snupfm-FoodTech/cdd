@@ -1013,3 +1013,98 @@ export const groupMaterialsByCategory = (
   // Convert the map back into an array
   return Object.values(groupedMap);
 };
+
+/** 중량 정리 단위. 급식 현장마다 저울 눈금이 달라 사용자가 고른다. */
+export const WEIGHT_UNITS = [1, 5, 10] as const;
+export type WeightUnit = (typeof WEIGHT_UNITS)[number];
+export const WEIGHT_UNIT_STORAGE_KEY = 'diet-weight-unit';
+
+/**
+ * 총 중량을 재료에 비율대로 나누되, 각 재료가 지정한 단위로 떨어지게 맞춘다.
+ *
+ * 비율대로만 나누면 166.67g 같은 값이 나와 저울로 잴 수 없다. 그래서
+ *  1) 목표 중량 자체를 단위에 맞춰 반올림하고
+ *  2) 각 재료를 단위 배수로 반올림한 뒤
+ *  3) 반올림 때문에 생긴 잔여분을 가장 큰 재료가 흡수한다.
+ * 그래야 모든 재료가 단위 배수이면서 합계도 목표와 정확히 맞는다.
+ *
+ * calculationWeight(폐기율 반영 산출중량)는 사람이 저울로 재는 값이 아니므로
+ * 재료별 기존 비율을 유지한 채 따라 움직이기만 한다.
+ */
+export const distributeWeightByUnit = (
+  materials: Material[],
+  targetWeight: number,
+  unit: number
+): { materials: Material[]; totalWeight: number } => {
+  const safeUnit = unit > 0 ? unit : 1;
+  const totalRecipeWeight = materials.reduce(
+    (sum, material) => sum + (material.recipeWeight || 0),
+    0
+  );
+
+  if (totalRecipeWeight <= 0 || targetWeight <= 0 || materials.length === 0) {
+    return { materials, totalWeight: totalRecipeWeight };
+  }
+
+  // 목표도 단위에 맞춘다. 그래야 모든 재료가 단위 배수인 채로 합이 맞는다.
+  const snappedTarget = Math.max(
+    safeUnit * materials.length,
+    Math.round(targetWeight / safeUnit) * safeUnit
+  );
+
+  const wasteRatios = materials.map((material) =>
+    material.recipeWeight ? (material.calculationWeight || 0) / material.recipeWeight : 1
+  );
+
+  const snapped = materials.map((material) => {
+    const share = (material.recipeWeight || 0) / totalRecipeWeight;
+    // 재료가 통째로 사라지지 않게 최소 한 단위는 남긴다
+    return Math.max(safeUnit, Math.round((snappedTarget * share) / safeUnit) * safeUnit);
+  });
+
+  // 잔여분은 가장 큰 재료에 몰아준다 - 비율이 가장 덜 흔들린다
+  const diff = snappedTarget - snapped.reduce((sum, weight) => sum + weight, 0);
+  if (diff !== 0) {
+    let largestIndex = 0;
+    snapped.forEach((weight, index) => {
+      if (weight > snapped[largestIndex]) largestIndex = index;
+    });
+    snapped[largestIndex] = Math.max(safeUnit, snapped[largestIndex] + diff);
+  }
+
+  return {
+    materials: materials.map((material, index) => ({
+      ...material,
+      recipeWeight: snapped[index],
+      calculationWeight: parseFloat((snapped[index] * wasteRatios[index]).toFixed(2))
+    })),
+    totalWeight: snapped.reduce((sum, weight) => sum + weight, 0)
+  };
+};
+
+/**
+ * 식단 전체 총 중량을 목표값에 맞춘다. 음식 구분 없이 모든 재료를 한 묶음으로 보고
+ * 비율대로 나누므로, 음식 사이의 비중은 그대로 유지된다.
+ */
+export const distributeDietWeight = (
+  foods: ITrayItem[],
+  targetWeight: number,
+  unit: number
+): ITrayItem[] => {
+  const flat: Material[] = foods.flatMap((food) => food.materials ?? []);
+  if (flat.length === 0) return foods;
+
+  const { materials: distributed } = distributeWeightByUnit(
+    flat,
+    targetWeight,
+    unit
+  );
+
+  let cursor = 0;
+  return foods.map((food) => {
+    const count = (food.materials ?? []).length;
+    const slice = distributed.slice(cursor, cursor + count);
+    cursor += count;
+    return count > 0 ? { ...food, materials: slice } : food;
+  });
+};

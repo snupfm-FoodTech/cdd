@@ -7,7 +7,8 @@ import {
   TableRow
 } from '@/components/ui/new-york-table';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { NutrientCompare } from '@/types/diet.type';
+import { ITrayItem, NutrientCompare } from '@/types/diet.type';
+import WeightAdjustPanel from './weight-adjust-panel';
 import {
   ColumnDef,
   ExpandedState,
@@ -27,12 +28,16 @@ interface NutrientTableProps {
   nutrients: NutrientCompare[];
   warningNutrients: NutrientCompare[];
   onChangeNutrientsSummary: (nutrients: NutrientCompare[]) => void;
+  foods?: ITrayItem[];
+  onChangeFoods?: (foods: ITrayItem[]) => void;
 }
 
 const NutrientTable = ({
   nutrients,
   warningNutrients,
-  onChangeNutrientsSummary
+  onChangeNutrientsSummary,
+  foods,
+  onChangeFoods
 }: NutrientTableProps) => {
   const isMobile = useMediaQuery('(max-width: 640px)');
   const [expanded, setExpanded] = useState<ExpandedState>({});
@@ -128,7 +133,7 @@ const NutrientTable = ({
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-      <div className="col-span-2">
+      <div className="col-span-1 md:col-span-2">
         <h3 className="mb-2 text-xl font-semibold tracking-tight">
           영양소정보
         </h3>
@@ -222,36 +227,11 @@ const NutrientTable = ({
           </ScrollArea>
         </div>
       </div>
-      <div className="col-span-1">
-        <h3 className="mb-2 text-xl font-semibold tracking-tight">
-          종합영양평가
-        </h3>
-        <div className="rounded-md border bg-white p-4">
-          {warningNutrients.length > 0 ? (
-            <>
-              <h3 className="mb-4 text-xl font-bold text-destructive">
-                영양기준 부적합
-              </h3>
-              <div className="flex flex-wrap items-center gap-2">
-                {warningNutrients.map((item, index) => (
-                  <span
-                    key={index}
-                    className="flex items-center justify-center truncate rounded-full bg-destructive px-2 py-1 text-sm text-white"
-                  >
-                    {item.name}
-                  </span>
-                ))}
-              </div>
-
-              <div className="mt-4 text-gray-500">
-                이(가) 영양 기준에 적합하지 않습니다.
-              </div>
-            </>
-          ) : (
-            <h3>모든 영양은 표준을 충족합니다.</h3>
-          )}
-        </div>
-      </div>
+      {/* 영양평가 결과는 화면 상단(식단 이름 옆)으로 옮겼다.
+          여기는 영양소 정보 옆에 중량 정보를 두어, 값을 보며 바로 조절하게 한다. */}
+      {foods && onChangeFoods && (
+        <WeightAdjustPanel foods={foods} onChange={onChangeFoods} />
+      )}
     </div>
   );
 };
