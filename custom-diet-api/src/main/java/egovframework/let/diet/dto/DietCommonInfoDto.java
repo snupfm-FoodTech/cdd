@@ -23,4 +23,10 @@ public class DietCommonInfoDto {
 	private String trayId;
 	
 	private String trayName;
+	
+	private String standardCode;
+	
+	private String standardName;
+	
+	private String updatedAt;
 }

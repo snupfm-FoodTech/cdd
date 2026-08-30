@@ -19,7 +19,21 @@ export interface Diet {
   name: string;
   description: string;
   favouriteFlag: FavouriteFlag.Yes | FavouriteFlag.No;
+  /** 목록 그룹핑에 쓰는 값들 - 목록 API 만 내려준다 */
+  standardCode?: string;
+  standardName?: string;
+  trayName?: string;
+  updatedAt?: string;
 }
+
+/** 식단 목록을 묶는 기준 */
+export type DietGroupBy = 'standard' | 'tray' | 'recent';
+
+export const DIET_GROUP_BY_LABEL: Record<DietGroupBy, string> = {
+  standard: '식단 유형',
+  tray: '식단 구성',
+  recent: '최근 수정순'
+};
 
 export interface DietDetail extends Diet {
   standard: NutrientStandardTemplate;
