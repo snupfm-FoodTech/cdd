@@ -1014,29 +1014,21 @@ export const groupMaterialsByCategory = (
   return Object.values(groupedMap);
 };
 
-/** 중량 정리 단위. 급식 현장마다 저울 눈금이 달라 사용자가 고른다. */
-export const WEIGHT_UNITS = [1, 5, 10] as const;
-export type WeightUnit = (typeof WEIGHT_UNITS)[number];
-export const WEIGHT_UNIT_STORAGE_KEY = 'diet-weight-unit';
-
 /**
- * 총 중량을 재료에 비율대로 나누되, 각 재료가 지정한 단위로 떨어지게 맞춘다.
+ * 총 중량을 재료에 비율대로 나누되, 각 재료가 1g 단위로 떨어지게 맞춘다.
  *
  * 비율대로만 나누면 166.67g 같은 값이 나와 저울로 잴 수 없다. 그래서
- *  1) 목표 중량 자체를 단위에 맞춰 반올림하고
- *  2) 각 재료를 단위 배수로 반올림한 뒤
- *  3) 반올림 때문에 생긴 잔여분을 가장 큰 재료가 흡수한다.
- * 그래야 모든 재료가 단위 배수이면서 합계도 목표와 정확히 맞는다.
+ *  1) 각 재료를 정수로 반올림한 뒤
+ *  2) 반올림 때문에 생긴 잔여분을 가장 큰 재료가 흡수한다.
+ * 그래야 모든 재료가 정수이면서 합계도 목표와 정확히 맞는다.
  *
  * calculationWeight(폐기율 반영 산출중량)는 사람이 저울로 재는 값이 아니므로
  * 재료별 기존 비율을 유지한 채 따라 움직이기만 한다.
  */
-export const distributeWeightByUnit = (
+export const distributeWeight = (
   materials: Material[],
-  targetWeight: number,
-  unit: number
+  targetWeight: number
 ): { materials: Material[]; totalWeight: number } => {
-  const safeUnit = unit > 0 ? unit : 1;
   const totalRecipeWeight = materials.reduce(
     (sum, material) => sum + (material.recipeWeight || 0),
     0
@@ -1046,39 +1038,36 @@ export const distributeWeightByUnit = (
     return { materials, totalWeight: totalRecipeWeight };
   }
 
-  // 목표도 단위에 맞춘다. 그래야 모든 재료가 단위 배수인 채로 합이 맞는다.
-  const snappedTarget = Math.max(
-    safeUnit * materials.length,
-    Math.round(targetWeight / safeUnit) * safeUnit
-  );
+  // 재료마다 최소 1g 은 남아야 하므로 목표도 그만큼은 되어야 한다
+  const target = Math.max(materials.length, Math.round(targetWeight));
 
   const wasteRatios = materials.map((material) =>
     material.recipeWeight ? (material.calculationWeight || 0) / material.recipeWeight : 1
   );
 
-  const snapped = materials.map((material) => {
+  const rounded = materials.map((material) => {
     const share = (material.recipeWeight || 0) / totalRecipeWeight;
-    // 재료가 통째로 사라지지 않게 최소 한 단위는 남긴다
-    return Math.max(safeUnit, Math.round((snappedTarget * share) / safeUnit) * safeUnit);
+    // 재료가 통째로 사라지지 않게 최소 1g 은 남긴다
+    return Math.max(1, Math.round(target * share));
   });
 
   // 잔여분은 가장 큰 재료에 몰아준다 - 비율이 가장 덜 흔들린다
-  const diff = snappedTarget - snapped.reduce((sum, weight) => sum + weight, 0);
+  const diff = target - rounded.reduce((sum, weight) => sum + weight, 0);
   if (diff !== 0) {
     let largestIndex = 0;
-    snapped.forEach((weight, index) => {
-      if (weight > snapped[largestIndex]) largestIndex = index;
+    rounded.forEach((weight, index) => {
+      if (weight > rounded[largestIndex]) largestIndex = index;
     });
-    snapped[largestIndex] = Math.max(safeUnit, snapped[largestIndex] + diff);
+    rounded[largestIndex] = Math.max(1, rounded[largestIndex] + diff);
   }
 
   return {
     materials: materials.map((material, index) => ({
       ...material,
-      recipeWeight: snapped[index],
-      calculationWeight: parseFloat((snapped[index] * wasteRatios[index]).toFixed(2))
+      recipeWeight: rounded[index],
+      calculationWeight: parseFloat((rounded[index] * wasteRatios[index]).toFixed(2))
     })),
-    totalWeight: snapped.reduce((sum, weight) => sum + weight, 0)
+    totalWeight: rounded.reduce((sum, weight) => sum + weight, 0)
   };
 };
 
@@ -1088,17 +1077,12 @@ export const distributeWeightByUnit = (
  */
 export const distributeDietWeight = (
   foods: ITrayItem[],
-  targetWeight: number,
-  unit: number
+  targetWeight: number
 ): ITrayItem[] => {
   const flat: Material[] = foods.flatMap((food) => food.materials ?? []);
   if (flat.length === 0) return foods;
 
-  const { materials: distributed } = distributeWeightByUnit(
-    flat,
-    targetWeight,
-    unit
-  );
+  const { materials: distributed } = distributeWeight(flat, targetWeight);
 
   let cursor = 0;
   return foods.map((food) => {
@@ -1107,4 +1091,36 @@ export const distributeDietWeight = (
     cursor += count;
     return count > 0 ? { ...food, materials: slice } : food;
   });
+};
+
+/** diet_mgmt.diet_nm 이 varchar(50) */
+const DIET_NAME_MAX_LENGTH = 50;
+
+/**
+ * 식단명 기본값을 지어 준다. "당뇨환자 식단 09/01" 꼴.
+ * 이름 짓기가 부담이라 ㅁㅁ·1111 같은 이름이 쌓이던 걸 막는 용도라,
+ * 이미 쓰는 이름이면 뒤에 번호를 붙여 그대로 저장해도 걸리지 않게 한다.
+ */
+export const buildDietNameSuggestion = (
+  standardName?: string,
+  existingNames: string[] = [],
+  today: Date = new Date()
+) => {
+  if (!standardName) return '';
+
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const date = String(today.getDate()).padStart(2, '0');
+  const base = `${standardName} ${month}/${date}`;
+
+  const taken = new Set(existingNames);
+
+  for (let index = 1; index <= 99; index += 1) {
+    const suffix = index === 1 ? '' : ` ${index}`;
+    const room = DIET_NAME_MAX_LENGTH - suffix.length;
+    const candidate = `${base.slice(0, room)}${suffix}`;
+
+    if (!taken.has(candidate)) return candidate;
+  }
+
+  return base.slice(0, DIET_NAME_MAX_LENGTH);
 };

@@ -198,6 +198,11 @@ export const dietApi = {
     return http.post(DIET_BASE_URL, params);
   },
 
+  /** 식단을 통째로 복사한다. name 을 비우면 서버가 "원본명 (사본)" 을 붙인다. */
+  copyDiet: async (dietId: number, name?: string): Promise<DietDetail> => {
+    return http.post(`${DIET_BASE_URL}/${dietId}/copy`, { name: name ?? null });
+  },
+
   addFoodsToTray: async (
     dietId: number,
     params: IDietAddFoodToTray

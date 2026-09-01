@@ -32,7 +32,6 @@ import { Plus } from 'lucide-react';
 import { scrollToTop } from '@/utils';
 import { useWindowScroll } from 'react-use';
 import Allergens from '../allergens';
-import DietGuideDialog from '../diet-guide-dialog';
 import DietCompareNutrient from './diet-compare-nutrient';
 import { INutrientSummary } from '@/types/nutrient.type';
 import { useAtom, useAtomValue } from 'jotai';
@@ -794,7 +793,6 @@ const DietFoodSelect = ({
                   ))}
               </div>
               <div className="flex shrink-0 items-center justify-end gap-2">
-                <DietGuideDialog />
                 <Button
                   type="submit"
                   disabled={!formDietDetails.formState.isValid}

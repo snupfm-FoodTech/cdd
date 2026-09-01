@@ -42,8 +42,8 @@ const DietManagement = () => {
                 breadcrumbs={[
                     { label: '식단 관리' }
                 ]}
-                titleSuffix={
-                    <DietGuideDialog className="border-white bg-white/95 text-foreground hover:bg-white" />
+                topRight={
+                    <DietGuideDialog className="h-9 border-white bg-white/95 px-3 text-foreground hover:bg-white md:h-10 md:px-4" />
                 }
             />
             <div className="rounded-2xl bg-gray-100 p-10">

@@ -90,6 +90,31 @@ public class DietDAO extends EgovAbstractMapper {
 		insert("DietDAO.addNewDietMgmt", entity);
 	}
 	
+	/**
+	 * 식단 한 벌(영양기준·음식·재료 스냅샷·알레르기·식판 템플릿)을 통째로 복제하고 새 dietId 를 돌려준다.
+	 * 호출 측 트랜잭션 안에서 실행되어야 한다.
+	 */
+	public int copyDiet(int srcDietId, int usrId, String newName) {
+		Map<String, Object> param = new HashMap<>();
+		param.put("srcDietId", srcDietId);
+		param.put("usrId", usrId);
+		param.put("newName", newName);
+
+		// 새 diet_id 를 먼저 확보한다 (tray_id 는 copyUserTrays 가 채운다)
+		Integer newDietId = selectOne("DietDAO.nextDietId");
+		param.put("newDietId", newDietId);
+
+		insert("DietDAO.copyDietMgmt", param);
+
+		insert("DietDAO.copyDietStdDtlMgmt", param);
+		insert("DietDAO.copyDietTrayDtlMgmt", param);
+		insert("DietDAO.copyDietFdDtlMgmt", param);
+		insert("DietDAO.copyDietAlrgMgmt", param);
+		update("DietDAO.copyUserTrays", param);
+
+		return newDietId;
+	}
+	
 	@Audited
 	public void addNewDietStdDtlMgmt(List<DietStandardDetailEntity> nutrients) {
 		insert("DietDAO.addNewDietStdDtlMgmt", nutrients);

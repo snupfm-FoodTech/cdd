@@ -4,12 +4,7 @@ import { CDTextArea } from '@/components/cd-text-area';
 import { Button } from '@/components/ui/button';
 import { FormControl, FormField, FormItem } from '@/components/ui/form';
 import { FieldValues, SubmitHandler, useFormContext } from 'react-hook-form';
-import {
-  calculateTotalWeightInGrams,
-  WEIGHT_UNIT_STORAGE_KEY,
-  WEIGHT_UNITS,
-  WeightUnit
-} from '../../helpers';
+import { calculateTotalWeightInGrams } from '../../helpers';
 import FoodConversionModal from './food-conversion-modal';
 import MyFoodsModal from './my-foods-modal';
 import { FoodInfoFormValue } from './food-info';
@@ -44,7 +39,7 @@ interface FoodDetailInfoProps {
   onSaveMaterials: (materials: FoodInfoFormValue) => void;
   onSaveFoods: () => void;
   food: Food;
-  onUpdateTotalWeight: (totalWeight: number, unit: number) => void;
+  onUpdateTotalWeight: (totalWeight: number) => void;
   onCancelTotalWeight: () => void;
   allergens: number[];
 }
@@ -85,28 +80,6 @@ const FoodDetailInfo: FC<FoodDetailInfoProps> = ({
   );
 
   const [isPending, startTransition] = useTransition();
-
-  // 마지막에 고른 정리 단위를 기억한다. 사람마다 쓰는 저울 눈금이 다르고,
-  // 매번 다시 고르게 하면 결국 안 쓰게 된다.
-  const [weightUnit, setWeightUnit] = useState<number>(WEIGHT_UNITS[0]);
-
-  useEffect(() => {
-    try {
-      const saved = Number(localStorage.getItem(WEIGHT_UNIT_STORAGE_KEY));
-      if (WEIGHT_UNITS.includes(saved as WeightUnit)) setWeightUnit(saved);
-    } catch (error) {
-      // 브라우저가 저장을 막아도 기본 단위로 동작하면 된다
-    }
-  }, []);
-
-  const handleChangeUnit = (unit: number) => {
-    setWeightUnit(unit);
-    try {
-      localStorage.setItem(WEIGHT_UNIT_STORAGE_KEY, String(unit));
-    } catch (error) {
-      // 무시
-    }
-  };
 
   const { mutateAsync: mutateAsyncRecipe } = useSaveRecipe();
   const { mutate: createRecipe, isPending: isSavingRecipe } = useCreateRecipe();
@@ -325,25 +298,10 @@ const FoodDetailInfo: FC<FoodDetailInfoProps> = ({
 
             {totalWeightMode === ETotalWeightMode.EDIT ? (
               <div className="flex flex-wrap items-center gap-2">
-                {/* 저울 눈금이 현장마다 달라 정리 단위를 고르게 하고, 고른 값은 브라우저에 기억시킨다 */}
-                <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  단위
-                  <select
-                    className="h-8 rounded-md border bg-background px-2 text-sm text-foreground"
-                    value={weightUnit}
-                    onChange={(e) => handleChangeUnit(Number(e.target.value))}
-                  >
-                    {WEIGHT_UNITS.map((unit) => (
-                      <option key={unit} value={unit}>
-                        {unit}g
-                      </option>
-                    ))}
-                  </select>
-                </label>
                 <Button
                   type="button"
                   size="sm"
-                  onClick={() => onUpdateTotalWeight(totalWeight, weightUnit)}
+                  onClick={() => onUpdateTotalWeight(totalWeight)}
                 >
                   저장
                 </Button>

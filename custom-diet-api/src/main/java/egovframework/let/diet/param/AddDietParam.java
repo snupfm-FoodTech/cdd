@@ -19,7 +19,7 @@ public class AddDietParam {
 	@NotBlank(message = "{diet.name.not-blank}")
 	private String name;
 	
-	@NotBlank(message = "{diet.description.not-blank}")
+	/** 선택 입력. 비워 두면 목록에서 이름만 보인다. */
 	private String description;
 	
 	@NotBlank(message = "{diet-std.code.not-blank}")

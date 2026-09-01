@@ -14,13 +14,16 @@ interface ClientHeaderPageProps {
   breadcrumbs: Breadcrumb[]; // Breadcrumb trail
   /** 제목 옆에 붙는 상태 표시 (예: 영양평가 결과) */
   titleSuffix?: ReactNode;
+  /** 배너 오른쪽 위 슬롯. 이 화면이 아니라 화면 전체에 대한 안내·도움말 자리다. */
+  topRight?: ReactNode;
 }
 
 const ClientHeaderPage = ({
   image,
   title,
   breadcrumbs,
-  titleSuffix
+  titleSuffix,
+  topRight
 }: ClientHeaderPageProps) => {
   const router = useRouter();
 
@@ -74,6 +77,12 @@ const ClientHeaderPage = ({
             opacity: 0.9
           }}
         />
+      )}
+
+      {topRight && (
+        <div className="section-padding absolute inset-x-0 top-0 z-20 flex justify-end pt-6 md:pt-8 lg:pt-10">
+          {topRight}
+        </div>
       )}
 
       {/* Content */}

@@ -37,6 +37,9 @@ import java.util.stream.Stream;
 public class EgovDietServiceImpl extends EgovAbstractServiceImpl implements EgovDietService {
     private static final String USR_STD_CD = "USR";
     private static final String USR_STD_NM = "사용자 식단";
+    /** diet_mgmt.diet_nm 은 varchar(50) */
+    private static final int DIET_NAME_MAX_LENGTH = 50;
+    private static final int COPY_NAME_MAX_TRIES = 99;
     private final DietDAO dietDAO;
     private final EgovMessageSource messageService;
     private final ModelMapper modelMapper;
@@ -455,6 +458,59 @@ public class EgovDietServiceImpl extends EgovAbstractServiceImpl implements Egov
             log.warn("Food recommendation failed for diet {}: {}", diet.getDietId(), e.getMessage());
             return findDietDetailById(diet.getDietId());
         }
+    }
+
+    /**
+     * 식단을 통째로 복사한다. 지금 만든 식단을 바탕으로 변형을 만들 때 쓴다.
+     * 이름을 주지 않으면 "원본명 (사본)" 부터 비어 있는 번호를 찾아 붙인다.
+     */
+    @Transactional
+    @Override
+    public DietDetailDto copyDietById(int dietId, String newName) {
+        // findDietDetailById 가 소유자 검증까지 한다
+        DietDetailDto source = findDietDetailById(dietId);
+        int usrId = AppUtil.getUserIdFromToken();
+
+        String name;
+        if (newName == null || newName.trim().isEmpty()) {
+            name = buildCopyName(source.getName(), usrId);
+        } else {
+            name = truncateDietName(newName.trim());
+            if (isDietNameTaken(name, usrId)) {
+                throw new ValidationException(messageService.get("diet.name.existed", name));
+            }
+        }
+
+        int newDietId = dietDAO.copyDiet(dietId, usrId, name);
+        return findDietDetailById(newDietId);
+    }
+
+    /** 화면에서도 50자로 막지만, 직접 호출로 들어온 이름을 서버에서 한 번 더 자른다. */
+    private String truncateDietName(String name) {
+        return name.length() > DIET_NAME_MAX_LENGTH ? name.substring(0, DIET_NAME_MAX_LENGTH) : name;
+    }
+
+    private boolean isDietNameTaken(String name, int usrId) {
+        return !dietDAO.findAllDietMgmt(FindAllDietParam.builder().usrId(usrId).dietNm(name).build()).isEmpty();
+    }
+
+    /** "○○ (사본)", 이미 있으면 "○○ (사본 2)" … 50자에 맞춰 원본명 쪽을 줄인다. */
+    private String buildCopyName(String sourceName, int usrId) {
+        String base = sourceName == null ? "" : sourceName;
+
+        for (int n = 1; n <= COPY_NAME_MAX_TRIES; n++) {
+            String suffix = n == 1 ? " (사본)" : " (사본 " + n + ")";
+            int room = DIET_NAME_MAX_LENGTH - suffix.length();
+            String trimmed = base.length() > room ? base.substring(0, room) : base;
+            String candidate = trimmed + suffix;
+
+            if (!isDietNameTaken(candidate, usrId)) {
+                return candidate;
+            }
+        }
+
+        // 사실상 도달하지 않는다. 그래도 이름 충돌 때문에 복사가 막히지는 않게 한다.
+        return truncateDietName(base + " (사본 " + System.currentTimeMillis() + ")");
     }
 
     @Transactional

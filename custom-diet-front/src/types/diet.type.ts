@@ -53,7 +53,8 @@ export interface DietDetail extends Diet {
 
 export interface IDietDetail {
   name: string;
-  description: string;
+  /** 선택 입력 */
+  description?: string;
   standardCode: string;
   standardName: string;
   nutrients: Nutrient[];

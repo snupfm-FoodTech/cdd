@@ -38,10 +38,11 @@ const DietInfo = () => {
         name="dietDescription"
         render={({ field }) => (
           <FormItem className="mt-4">
-            <FormLabel required>식단 설명</FormLabel>
+            <FormLabel>식단 설명</FormLabel>
             <FormControl>
               <CDTextArea
                 className="h-16 w-full border bg-white"
+                placeholder="선택 입력"
                 {...field}
                 maxLength={255}
               />

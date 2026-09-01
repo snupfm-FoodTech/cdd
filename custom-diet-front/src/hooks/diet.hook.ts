@@ -474,6 +474,33 @@ export const useDeleteDiet = () => {
   });
 };
 
+/** 식단 복사. 성공하면 목록을 다시 불러오고, 호출한 쪽에서 복사본으로 이동한다. */
+export const useCopyDiet = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ dietId, name }: { dietId: number; name?: string }) =>
+      dietApi.copyDiet(dietId, name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.DIET_LIST]
+      });
+      toast({
+        title: '복사했습니다.',
+        variant: 'success'
+      });
+    },
+    onError: (error: any) => {
+      // 이름 중복 등 서버 검증 메시지는 그대로 보여준다
+      const message =
+        error?.errors?.length > 0 ? error.errors[0] : '복사하지 못했습니다.';
+      toast({
+        title: message,
+        variant: 'destructive'
+      });
+    }
+  });
+};
+
 // hooks for template tray
 export const useCreateTrayTemplate = () => {
   const queryClient = useQueryClient();

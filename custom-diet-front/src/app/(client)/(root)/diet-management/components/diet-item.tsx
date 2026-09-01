@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { FavouriteFlag } from '@/types';
 import { Diet } from '@/types/diet.type';
 import { Pencil1Icon } from '@radix-ui/react-icons';
-import { MoreHorizontal, Star, Trash2 } from 'lucide-react';
+import { Copy, MoreHorizontal, Star, Trash2 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 
 interface DietItemProps {
@@ -25,6 +25,7 @@ interface DietItemProps {
   onFavorite: (id: number, favorite: string) => void;
   onUpdate?: () => void;
   onDetail?: () => void;
+  onCopy?: (diet: Diet) => void;
   selectable?: boolean;
   selected?: boolean;
   onToggleSelect?: (id: number) => void;
@@ -37,6 +38,7 @@ const DietItem = ({
   onFavorite,
   onUpdate,
   onDetail,
+  onCopy,
   selectable = false,
   selected = false,
   onToggleSelect
@@ -70,6 +72,11 @@ const DietItem = ({
   const handleDelete = (event: React.MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
     onDelete(diet.id);
+  };
+
+  const handleCopy = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    onCopy && onCopy(diet);
   };
 
   return (
@@ -137,6 +144,11 @@ const DietItem = ({
             <DropdownMenuItem onClick={goToUpdate}>
               <Pencil1Icon className="mr-2 h-4 w-4 text-primary" /> 수정
             </DropdownMenuItem>
+            {onCopy && (
+              <DropdownMenuItem onClick={handleCopy}>
+                <Copy className="mr-2 h-4 w-4 text-primary" /> 복사
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={handleDelete}>
               <Trash2 className="mr-2 h-4 w-4 text-destructive" /> 삭제
             </DropdownMenuItem>

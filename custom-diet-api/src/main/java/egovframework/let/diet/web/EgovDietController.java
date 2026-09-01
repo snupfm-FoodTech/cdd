@@ -41,6 +41,7 @@ import egovframework.let.diet.param.AddMaterialMaterialParam;
 import egovframework.let.diet.param.AddNutritionSummaryToDietParam;
 import egovframework.let.diet.param.AddPriceToDietParam;
 import egovframework.let.diet.param.CheckAllergenFoodParam;
+import egovframework.let.diet.param.CopyDietParam;
 import egovframework.let.diet.param.DietTrayParam;
 import egovframework.let.diet.param.ExportDietsExcelParam;
 import egovframework.let.diet.param.SaveExcludedAllergenToDietParam;
@@ -76,6 +77,15 @@ public class EgovDietController {
 	@PostMapping
 	public ResponseEntity<ResponseDto> addNewDiet(@Valid @RequestBody AddDietParam param) {
 		return ResponseUtil.get(dietService.addNewDiet(param), HttpStatus.CREATED);
+	}
+
+	@Authorized
+	@PostMapping("/{dietId}/copy")
+	public ResponseEntity<ResponseDto> copyDietById(@PathVariable("dietId") int dietId,
+			@RequestBody(required = false) CopyDietParam param) {
+
+		String newName = param == null ? null : param.getName();
+		return ResponseUtil.get(dietService.copyDietById(dietId, newName), HttpStatus.CREATED);
 	}
 
 	@Authorized

@@ -6,10 +6,7 @@ import { Spinner } from '@/components/spinner';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { DIET_MANAGEMENT_URL } from '@/constants/routes';
-import {
-  useCreateDiet,
-  useTemplateTrays
-} from '@/hooks/diet.hook';
+import { useCreateDiet, useDiets, useTemplateTrays } from '@/hooks/diet.hook';
 import { IDietDetail } from '@/types/diet.type';
 import { Nutrient, NutrientStandardTemplate } from '@/types/nutrient.type';
 import { checkTokenExisted } from '@/utils';
@@ -22,7 +19,7 @@ import { z } from 'zod';
 import DietInfo from '../../components/diet-info';
 import DietPlan from '../../components/diet-plan';
 import NutrientStandard from '../../components/nutrient-standard';
-import { convertToNutrients } from '../../helpers';
+import { buildDietNameSuggestion, convertToNutrients } from '../../helpers';
 import { BASE_PATH } from '@/constants';
 import { cn } from '@/lib/utils';
 import { useMediaQuery } from 'usehooks-ts';
@@ -34,9 +31,8 @@ const dietFormShema = z.object({
   dietName: z.string().trim().min(1, {
     message: '필수 입력 항목입니다'
   }),
-  dietDescription: z.string().trim().min(1, {
-    message: '필수 입력 항목입니다'
-  }),
+  // 설명은 선택 입력. 이름만으로도 목록에서 구분된다.
+  dietDescription: z.string().trim().optional(),
   // ✨ tray 관련 필드는 이제 localTrays state로 관리되므로 optional로 변경
   tray: z
     .object({
@@ -139,6 +135,27 @@ const DietCreate = () => {
       }
     }
   }, [selectedTrayCode, allTrays, representativeTrayIndex]);
+
+  // ✨ 식단명 기본값 — 영양기준과 식판이 정해지면 지어 준다.
+  //    이름 짓기가 부담이라 목록에 ㅁㅁ·1111 같은 이름이 쌓이던 걸 막는다.
+  const { data: existingDiets } = useDiets();
+  const nutrientTemplate = form.watch('nutrientTemplate');
+  const isDietNameEdited = !!form.formState.dirtyFields.dietName;
+
+  const suggestedDietName = useMemo(
+    () =>
+      buildDietNameSuggestion(
+        nutrientTemplate?.name,
+        (existingDiets ?? []).map((diet) => diet.name)
+      ),
+    [nutrientTemplate?.name, existingDiets]
+  );
+
+  useEffect(() => {
+    // 사용자가 한 번이라도 직접 고쳤으면 그대로 둔다
+    if (!suggestedDietName || isDietNameEdited) return;
+    form.setValue('dietName', suggestedDietName);
+  }, [suggestedDietName, isDietNameEdited, form]);
 
   // ✨ Tray 관리 handlers
   const handleAddTray = (trayData: any) => {

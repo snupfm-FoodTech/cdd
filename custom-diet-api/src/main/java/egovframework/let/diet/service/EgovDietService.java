@@ -40,6 +40,7 @@ public interface EgovDietService {
 	List<DietCommonInfoDto> findAllDiet();
 	DietDetailDto findDietDetailById(int dietId);
 	DietDetailDto addNewDiet(AddDietParam param);
+	DietDetailDto copyDietById(int dietId, String newName);
 	DietDetailDto updateDietById(int dietId, UpdateDietParam param);
 	void modifyDietFavFlag(int dietId, String favFlag);
 	void deleteDietById(int dietId);

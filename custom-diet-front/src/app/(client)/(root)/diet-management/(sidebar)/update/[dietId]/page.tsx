@@ -41,9 +41,8 @@ const dietFormSchema = z.object({
   dietName: z.string().trim().min(1, {
     message: '필수 입력 항목입니다'
   }),
-  dietDescription: z.string().trim().min(1, {
-    message: '필수 입력 항목입니다'
-  }),
+  // 생성 화면과 같이 선택 입력
+  dietDescription: z.string().trim().optional(),
   tray: z
     .object({
       id: z.number(),
@@ -131,7 +130,7 @@ const DietUpdate = ({ params }: DietDetailProps) => {
     if (data) {
       reset({
         dietName: data.name,
-        dietDescription: data.description,
+        dietDescription: data.description ?? '',
         nutrientTemplateCode: data.standard?.code,
         tray: data.tray as any,
         nutrientTemplate: {

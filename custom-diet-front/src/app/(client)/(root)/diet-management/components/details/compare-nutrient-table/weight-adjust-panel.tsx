@@ -5,12 +5,7 @@ import { Input } from '@/components/ui/input';
 import { ITrayItem } from '@/types/diet.type';
 import { Undo2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  distributeDietWeight,
-  WEIGHT_UNIT_STORAGE_KEY,
-  WEIGHT_UNITS,
-  WeightUnit
-} from '../../../helpers';
+import { distributeDietWeight } from '../../../helpers';
 
 interface WeightAdjustPanelProps {
   foods: ITrayItem[];
@@ -31,19 +26,8 @@ const sumWeight = (foods: ITrayItem[]) =>
 const WeightAdjustPanel = ({ foods, onChange }: WeightAdjustPanelProps) => {
   const currentWeight = useMemo(() => sumWeight(foods), [foods]);
 
-  const [unit, setUnit] = useState<number>(WEIGHT_UNITS[0]);
   const [target, setTarget] = useState<string>('');
   const [history, setHistory] = useState<ITrayItem[][]>([]);
-
-  // 사람마다 쓰는 저울 눈금이 달라 마지막 선택을 기억해 둔다
-  useEffect(() => {
-    try {
-      const saved = Number(localStorage.getItem(WEIGHT_UNIT_STORAGE_KEY));
-      if (WEIGHT_UNITS.includes(saved as WeightUnit)) setUnit(saved);
-    } catch (error) {
-      // 저장이 막혀 있어도 기본 단위로 동작하면 된다
-    }
-  }, []);
 
   // 입력칸은 항상 현재 총 중량에서 시작한다 (직접 고치는 중이 아니라면)
   const isEditing = useRef(false);
@@ -63,15 +47,6 @@ const WeightAdjustPanel = ({ foods, onChange }: WeightAdjustPanelProps) => {
     }
   }, [composition]);
 
-  const changeUnit = (next: number) => {
-    setUnit(next);
-    try {
-      localStorage.setItem(WEIGHT_UNIT_STORAGE_KEY, String(next));
-    } catch (error) {
-      // 무시
-    }
-  };
-
   const hasMaterials = currentWeight > 0;
   const targetNumber = Number(target);
   const canApply =
@@ -80,7 +55,7 @@ const WeightAdjustPanel = ({ foods, onChange }: WeightAdjustPanelProps) => {
   const apply = () => {
     if (!canApply) return;
     setHistory((prev) => [...prev, foods].slice(-10));
-    onChange(distributeDietWeight(foods, targetNumber, unit));
+    onChange(distributeDietWeight(foods, targetNumber));
     isEditing.current = false;
   };
 
@@ -129,22 +104,6 @@ const WeightAdjustPanel = ({ foods, onChange }: WeightAdjustPanelProps) => {
               />
             </label>
 
-            <label className="flex flex-col gap-1 text-sm text-muted-foreground">
-              정리 단위
-              <select
-                className="h-9 rounded-md border bg-background px-2 text-sm text-foreground"
-                value={unit}
-                disabled={!hasMaterials}
-                onChange={(e) => changeUnit(Number(e.target.value))}
-              >
-                {WEIGHT_UNITS.map((value) => (
-                  <option key={value} value={value}>
-                    {value}g
-                  </option>
-                ))}
-              </select>
-            </label>
-
             <Button
               type="button"
               size="sm"
@@ -169,11 +128,12 @@ const WeightAdjustPanel = ({ foods, onChange }: WeightAdjustPanelProps) => {
           </div>
         </div>
 
-        <p className="mt-auto pt-3 text-xs text-muted-foreground">
-          {hasMaterials
-            ? `재료 비율은 그대로 두고 ${unit}g 단위로 맞춥니다.`
-            : '재료가 담긴 음식이 있어야 조절할 수 있습니다.'}
-        </p>
+        {/* 조절이 막힌 이유만 알려 준다. 동작 설명은 사용법에 있다. */}
+        {!hasMaterials && (
+          <p className="mt-auto pt-3 text-xs text-muted-foreground">
+            재료가 담긴 음식이 있어야 조절할 수 있습니다.
+          </p>
+        )}
       </div>
     </div>
   );

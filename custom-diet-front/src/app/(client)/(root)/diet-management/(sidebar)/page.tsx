@@ -8,6 +8,7 @@ import isEmpty from 'lodash/isEmpty';
 import { FavouriteFlag } from '@/types';
 import { DIET_MANAGEMENT_URL } from '@/constants/routes';
 import { BASE_PATH } from '@/constants';
+import DietGuideDialog from '../components/diet-guide-dialog';
 
 const DietManagement = () => {
   const { data: diets, isPending: isPendingDiets } = useDiets();
@@ -51,6 +52,12 @@ const DietManagement = () => {
             />
           </picture>
           <p className="mt-8 text-xl font-bold">식단 목록이 비어있습니다</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            왼쪽 <span className="font-semibold">식단 추가</span> 로 첫 식단을 만들어 보세요.
+          </p>
+          <div className="mt-4">
+            <DietGuideDialog />
+          </div>
         </div>
       )}
     </>

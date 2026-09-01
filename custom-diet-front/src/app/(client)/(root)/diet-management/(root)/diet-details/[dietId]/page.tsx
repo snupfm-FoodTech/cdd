@@ -26,7 +26,7 @@ import {
 } from '@/types/diet.type';
 import { Food, FoodMaterialForm, Material } from '@/types/food.type';
 import { INutrientSummary } from '@/types/nutrient.type';
-import { distributeWeightByUnit } from '../../../helpers';
+import { distributeWeight } from '../../../helpers';
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
 import isNil from 'lodash/isNil';
@@ -36,6 +36,7 @@ import DietCompareNutrient from '../../../components/details/diet-compare-nutrie
 import DietFoodSelect from '../../../components/details/diet-food-select';
 import FoodInfo from '../../../components/details/food-info';
 import ClientHeaderPage from '@/components/layout/client/client-header-page';
+import DietGuideDialog from '../../../components/diet-guide-dialog';
 import { ChangeStandardFlag } from '@/types';
 import { checkTokenExisted } from '@/utils';
 import { BASE_PATH } from '@/constants';
@@ -264,11 +265,7 @@ const DietDetails = ({ params }: DietDetailProps) => {
     }
   };
 
-  const handleOnUpdateTotalWeight = (
-    totalWeight: number,
-    materials: Material[],
-    unit: number
-  ) => {
+  const handleOnUpdateTotalWeight = (totalWeight: number, materials: Material[]) => {
     setIsManualUpdate(true);
     if (!food || !foods) return;
 
@@ -294,14 +291,14 @@ const DietDetails = ({ params }: DietDetailProps) => {
       return;
     }
 
-    // 비율대로 나누되 저울로 잴 수 있는 단위로 떨어지게 맞춘다.
+    // 비율대로 나누되 저울로 잴 수 있게 g 단위로 떨어뜨린다.
     // 그냥 비율로만 나누면 166.67g 같은 값이 나온다.
-    const distributed = distributeWeightByUnit(materials, totalWeight, unit);
+    const distributed = distributeWeight(materials, totalWeight);
     const updatedMaterials = distributed.materials;
 
     if (distributed.totalWeight !== totalWeight) {
       toast({
-        title: `총 중량이 ${distributed.totalWeight}g 으로 맞춰졌습니다 (${unit}g 단위).`
+        title: `총 중량이 ${distributed.totalWeight}g 으로 맞춰졌습니다.`
       });
     }
 
@@ -556,6 +553,9 @@ const DietDetails = ({ params }: DietDetailProps) => {
           { label: diet.name, url: `${DIET_MANAGEMENT_URL}/${params.dietId}` },
           { label: '트레이에 음식 추가' }
         ]}
+        topRight={
+          <DietGuideDialog className="h-9 border-white bg-white/95 px-3 text-foreground hover:bg-white md:h-10 md:px-4" />
+        }
       />
 
       <div className="section-padding section-padding-y w-full">

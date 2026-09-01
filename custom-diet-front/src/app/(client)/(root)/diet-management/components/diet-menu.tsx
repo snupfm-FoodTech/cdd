@@ -10,6 +10,7 @@ import { Diet, DietGroupBy } from '@/types/diet.type';
 import { ChevronDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
+import DietCopyDialog from './diet-copy-dialog';
 import DietItem from './diet-item';
 import DietItemSkeleton from './diet-item-skeleton';
 import { checkTokenExisted } from '@/utils';
@@ -65,6 +66,8 @@ const DietMenu = ({
   const router = useRouter();
 
   const [selectedId, setSelectedId] = useState<number>(0);
+  /** 복사 대상. 다이얼로그는 목록이 들고 있어야 항목이 다시 그려져도 유지된다. */
+  const [copyTarget, setCopyTarget] = useState<Diet | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<string[]>([]);
 
   const toggleGroup = (key: string) =>
@@ -136,6 +139,7 @@ const DietMenu = ({
             onDetailItem && onDetailItem();
           }}
           onFavorite={handleFavorite}
+          onCopy={setCopyTarget}
           selectable={selectable}
           selected={selectedIds.includes(diet.id)}
           onToggleSelect={onToggleSelect}
@@ -196,6 +200,13 @@ const DietMenu = ({
   return (
     <>
       {renderAlertModal()}
+      <DietCopyDialog
+        dietId={copyTarget?.id}
+        dietName={copyTarget?.name}
+        open={copyTarget !== null}
+        onOpenChange={(open) => !open && setCopyTarget(null)}
+        onCopied={() => onUpdateItem && onUpdateItem()}
+      />
       <ScrollAreaMenu className="h-[calc(100vh-13rem)]">
         <div className="mr-3 h-full space-y-4">
           {favouriteDiets.length > 0 && (
