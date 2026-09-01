@@ -1,6 +1,7 @@
 import { CDInput } from '@/components/cd-input';
 import { Icons } from '@/components/icons';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Command,
   CommandEmpty,
@@ -14,35 +15,36 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from '@/components/ui/popover';
-import { useFoods } from '@/hooks/diet.hook';
+import { useFoodsWithPaging } from '@/hooks/diet.hook';
 import { debounce } from 'lodash';
 import React, { useEffect, useRef, useState } from 'react';
 import NutrientSkeleton from '../nutrient-skeleton';
 import { ITrayItem } from '@/types/diet.type';
 import { useQueryClient } from '@tanstack/react-query';
 import { QueryKeys } from '@/constants/query-keys.constant';
-import { useMediaQuery } from 'usehooks-ts';
 import { Search } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-is-mobile';
 
-interface FoodSearchBarListProps {
-  onSelectFood: (food: ITrayItem) => void;
-  selectedTrayItem: ITrayItem;
-  value: string;
-  allergens: number[];
+interface FoodCategory {
+  code: string;
+  label: string;
 }
 
+// com_intg_cd_dtl 테이블의 CD00013 그룹 (식품유형코드) 기준
+const FOOD_CATEGORIES: FoodCategory[] = [
+  { code: 'FT00001', label: '밥/죽/면' },
+  { code: 'FT00002', label: '국/탕' },
+  { code: 'FT00003', label: '채소류 반찬' },
+  { code: 'FT00004', label: '단백질 반찬' },
+  { code: 'FT00005', label: '김치류 반찬' },
+  { code: 'FT00006', label: '기타 반찬' }
+];
+
+const FOOD_PAGE_LIMIT = 30;
+
 const highlightText = (text: string, highlight: string) => {
-  // Kiểm tra nếu highlight rỗng hoặc chỉ có khoảng trắng
   if (!highlight || !highlight.trim()) {
     return text;
   }
-
   const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
   return parts.map((part, index) =>
     part.toLowerCase() === highlight.toLowerCase() ? (
@@ -58,48 +60,95 @@ const highlightText = (text: string, highlight: string) => {
   );
 };
 
+interface FoodSearchBarListProps {
+  onSelectFood: (food: ITrayItem) => void;
+  value: string;
+  typeCode?: string;
+  allergens: number[];
+}
+
 const FoodSearchBarList = ({
   onSelectFood,
   value,
-  selectedTrayItem,
+  typeCode,
   allergens
 }: FoodSearchBarListProps) => {
-  const { data: foods, isPending } = useFoods({
-    limit: 20,
+  const [page, setPage] = useState<number>(1);
+
+  useEffect(() => {
+    setPage(1);
+  }, [typeCode, value]);
+
+  const { data, isPending } = useFoodsWithPaging({
+    page,
+    limit: FOOD_PAGE_LIMIT,
     searchValue: value,
-    typeCode: selectedTrayItem.typeCode,
-    excludedAllergenIds: process.env.NEXT_PUBLIC_FEATURE_ALLERGEN === 'false' ? [] : allergens
+    typeCode,
+    excludedAllergenIds:
+      process.env.NEXT_PUBLIC_FEATURE_ALLERGEN === 'false' ? [] : allergens
   });
 
   if (isPending) {
     return <NutrientSkeleton count={1} />;
   }
 
+  const foods = data?.items ?? [];
+  const totalPages = data?.totalPageNo ?? 1;
+
   return (
-    <Command>
-      <CommandList>
-        <CommandEmpty>
-          특정한 식품 검색 없이 카테고리별로 식품을 찾을 수 있어요.
-        </CommandEmpty>
-        {foods && foods.length > 0 && (
-          <CommandGroup>
-            {foods.map((food) => (
-              <CommandItem
-                key={food.code}
-                value={food.name}
-                className="data-[disabled='false']"
-                onSelect={() => onSelectFood(food)}
-              >
-                <p className="wrap-anywhere pr-1">
-                  {highlightText(food.name || '', value)}
-                </p>
-                <Badge className="ml-auto !whitespace-nowrap !px-3">추가</Badge>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        )}
-      </CommandList>
-    </Command>
+    <div className="flex flex-col gap-2">
+      <Command>
+        <CommandList className="max-h-[55vh]">
+          <CommandEmpty>
+            해당 카테고리에 검색 결과가 없어요. 다른 카테고리를 선택해보세요.
+          </CommandEmpty>
+          {foods.length > 0 && (
+            <CommandGroup>
+              {foods.map((food) => (
+                <CommandItem
+                  key={food.code}
+                  value={food.name}
+                  className="data-[disabled='false']"
+                  onSelect={() => onSelectFood(food)}
+                >
+                  <p className="wrap-anywhere pr-1">
+                    {highlightText(food.name || '', value)}
+                  </p>
+                  <Badge className="ml-auto !whitespace-nowrap !px-3">
+                    추가
+                  </Badge>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+        </CommandList>
+      </Command>
+      {totalPages > 1 && (
+        <div className="flex shrink-0 items-center justify-center gap-3 border-t pt-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={page <= 1}
+            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+          >
+            이전
+          </Button>
+          <span className="whitespace-nowrap text-sm text-gray-500">
+            {page} / {totalPages}
+          </span>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={page >= totalPages}
+            onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+          >
+            다음
+          </Button>
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -116,12 +165,11 @@ const FoodSearchBar = ({
 }: FoodSearchBarProps) => {
   const [value, setValue] = useState<string>('');
   const [oldValue, setOldValue] = useState<string>('');
-  const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isOpenDialog, setIsOpenDialog] = useState<boolean>(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    selectedTrayItem.typeCode
+  );
   const searchInputRef = useRef<HTMLInputElement>(null);
-
-  const isMobile = useIsMobile();
-
   const queryClient = useQueryClient();
 
   const debouncedFilter = debounce((input: string) => {
@@ -131,7 +179,6 @@ const FoodSearchBar = ({
       });
       setOldValue(input);
     }
-    setIsOpen(!!input); // Set popover open state based on input presence
   }, 300);
 
   useEffect(() => {
@@ -143,22 +190,15 @@ const FoodSearchBar = ({
   }, [value]);
 
   useEffect(() => {
-    let timeoutId: number | undefined = undefined;
-
-    if (isOpen && searchInputRef.current) {
-      // Delay focusing to ensure popover content is rendered
-      timeoutId = window.setTimeout(() => {
-        searchInputRef.current!.focus();
+    if (isOpenDialog) {
+      setSelectedCategory(selectedTrayItem.typeCode);
+      const timeoutId = window.setTimeout(() => {
+        searchInputRef.current?.focus();
       }, 0);
+      return () => clearTimeout(timeoutId);
     }
-
-    // Cleanup function to clear the timeout
-    return () => {
-      if (timeoutId !== undefined) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [isOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpenDialog]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setValue(e.target.value);
@@ -168,76 +208,65 @@ const FoodSearchBar = ({
     onSelectFood(food);
     setValue('');
     setOldValue('');
-    setIsOpen(false);
     setIsOpenDialog(false);
   };
 
-  const List = (
-    <FoodSearchBarList
-      allergens={allergens}
-      selectedTrayItem={selectedTrayItem}
-      onSelectFood={handleSelect}
-      value={oldValue}
-    />
-  );
-
-  if (isMobile) {
-    return (
-      <>
-        <button
-          type="button"
-          onClick={() => setIsOpenDialog(true)}
-          className="w-full rounded-md border border-input bg-white px-3 py-2 text-left text-sm"
-        >
-          <div className="flex items-center justify-between">
-            <div className="text-gray-500">영양소 추가</div>
-            <div className="">
-              <Search className="h-4 w-4 text-gray-400" />
-            </div>
-          </div>
-        </button>
-
-        <Dialog open={isOpenDialog} onOpenChange={setIsOpenDialog}>
-          <DialogContent className="w-full">
-            <DialogHeader>
-              <DialogTitle className="flex items-center justify-between">
-                영양소 검색
-              </DialogTitle>
-            </DialogHeader>
-            <div className="h-[60vh] p-2">
-              <CDInput
-                placeholder="영양소 검색"
-                value={value}
-                onChange={handleInputChange}
-                endIcon={Icons.search}
-                className="mb-3 w-full"
-                ref={searchInputRef}
-              />
-              {List}
-            </div>
-          </DialogContent>
-        </Dialog>
-      </>
-    );
-  }
-
   return (
-    <div>
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger>
+    <>
+      <button
+        type="button"
+        onClick={() => setIsOpenDialog(true)}
+        className="w-72 rounded-md border border-input bg-white px-3 py-2 text-left text-sm text-gray-500"
+      >
+        <div className="flex items-center justify-between">
+          <span>다른 음식 검색</span>
+          <Search className="h-4 w-4 text-gray-400" />
+        </div>
+      </button>
+      <Dialog open={isOpenDialog} onOpenChange={setIsOpenDialog}>
+        <DialogContent className="flex h-[75vh] w-full max-w-3xl flex-col">
+          <DialogHeader>
+            <DialogTitle>다른 음식 검색</DialogTitle>
+          </DialogHeader>
           <CDInput
-            placeholder="다른 음식 검색"
+            placeholder="음식 이름으로 검색"
             value={value}
             onChange={handleInputChange}
-            onBlur={handleInputChange}
             endIcon={Icons.search}
-            className="w-72"
+            className="w-full"
             ref={searchInputRef}
           />
-        </PopoverTrigger>
-        <PopoverContent>{List}</PopoverContent>
-      </Popover>
-    </div>
+          <div className="flex flex-1 gap-4 overflow-hidden">
+            <div className="flex w-40 shrink-0 flex-col gap-2 overflow-y-auto border-r pr-3">
+              {FOOD_CATEGORIES.map((category) => (
+                <Button
+                  key={category.code}
+                  type="button"
+                  size="sm"
+                  variant={
+                    selectedCategory === category.code
+                      ? 'default'
+                      : 'outline'
+                  }
+                  className="justify-start"
+                  onClick={() => setSelectedCategory(category.code)}
+                >
+                  {category.label}
+                </Button>
+              ))}
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <FoodSearchBarList
+                allergens={allergens}
+                typeCode={selectedCategory}
+                onSelectFood={handleSelect}
+                value={oldValue}
+              />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

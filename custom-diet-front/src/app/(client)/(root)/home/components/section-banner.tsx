@@ -52,7 +52,7 @@ const slides: Slide[] = [
     title: '맞춤형 식이 설계 프로그램',
     description: (
       <>
-        식단에서부터 가공식품, 원재료까지 영양성분･알레르기 등
+        식단에서부터 가공식품, 원재료까지 영양성분 등
         <br />
         <span className="font-bold text-primary">
           다양한 특성 정보를 기반

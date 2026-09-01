@@ -154,6 +154,36 @@ export const dietApi = {
     return http.get(url);
   },
 
+  getFoodsWithPaging: async ({
+    page,
+    limit,
+    searchValue,
+    fdTpCd,
+    excludedAllergenIds
+  }: {
+    page: number;
+    limit: number;
+    searchValue?: string;
+    fdTpCd?: string;
+    excludedAllergenIds?: number[];
+  }): Promise<{
+    items: ITrayItem[];
+    totalPageNo: number;
+    totalRecordNo: number;
+  }> => {
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
+    if (searchValue) params.append('keyword', searchValue);
+    if (fdTpCd) params.append('fdTpCd', fdTpCd);
+    if (excludedAllergenIds && excludedAllergenIds.length > 0) {
+      params.append('excludedAllergenIds', excludedAllergenIds.join(','));
+    }
+
+    const url = `${DIET_BASE_URL}/foods/paging?${params.toString()}`;
+    return http.get(url);
+  },
+
   getRecommendFoods: async ({
     limit,
     foodCode,

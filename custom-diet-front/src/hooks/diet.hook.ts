@@ -195,9 +195,42 @@ export const useFoods = ({
   excludedAllergenIds?: number[];
 }) => {
   return useQuery({
-    queryKey: [QueryKeys.DIET_FOOD_LIST],
+    queryKey: [QueryKeys.DIET_FOOD_LIST, typeCode, searchValue, limit],
     queryFn: () =>
       dietApi.getFoods({
+        limit,
+        searchValue,
+        fdTpCd: typeCode,
+        excludedAllergenIds
+      })
+  });
+};
+
+export const useFoodsWithPaging = ({
+  page,
+  limit,
+  searchValue,
+  typeCode,
+  excludedAllergenIds
+}: {
+  page: number;
+  limit: number;
+  searchValue?: string;
+  typeCode?: string;
+  excludedAllergenIds?: number[];
+}) => {
+  return useQuery({
+    queryKey: [
+      QueryKeys.DIET_FOOD_LIST,
+      'paging',
+      page,
+      limit,
+      typeCode,
+      searchValue
+    ],
+    queryFn: () =>
+      dietApi.getFoodsWithPaging({
+        page,
         limit,
         searchValue,
         fdTpCd: typeCode,
